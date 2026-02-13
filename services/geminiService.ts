@@ -3,9 +3,17 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScrollSection } from "../types";
 
 export async function generateVideoStory(videoDescription: string): Promise<ScrollSection[]> {
-  // Safe environment check
-  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
-  const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+  // Ultra-safe check for API_KEY
+  let apiKey = "";
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      apiKey = process.env.API_KEY || "";
+    }
+  } catch (e) {
+    console.warn("Process env access blocked.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `Act as a world-class creative director for a high-end digital agency. 
   Analyze this video concept: "${videoDescription}".
