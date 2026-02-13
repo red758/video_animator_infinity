@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { ScrollSection } from '../types';
 import InfinityLogo from './Logo';
@@ -140,7 +139,8 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
           {sections.map((section, idx) => (
             <div
               key={idx}
-              ref={(el) => (sectionRefs.current[idx] = el)}
+              // Fix: Wrapped ref assignment in braces to return void and satisfy TypeScript Ref requirements.
+              ref={(el) => { sectionRefs.current[idx] = el; }}
               className={`absolute inset-0 flex px-8 md:px-24 py-16 ${
                 section.alignment === 'left' ? 'justify-start items-center text-left' : 
                 section.alignment === 'right' ? 'justify-end items-center text-right' : 

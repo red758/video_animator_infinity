@@ -1,15 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Code, Share2, Zap, Globe, AlertCircle, Key } from 'lucide-react';
+import { Code, Share2, Zap, Globe, AlertCircle } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import VideoScroller from './components/VideoScroller';
 import InfinityLogo from './components/Logo';
 import { generateVideoStory } from './services/geminiService';
 import { generateStandaloneHTML } from './services/exportService';
 import { VideoState } from './types';
-
-// The global declaration for 'aistudio' is removed to avoid conflicts with 
-// pre-configured types in the execution environment. We access it via (window as any).
 
 const App: React.FC = () => {
   const [state, setState] = useState<VideoState>({
@@ -20,36 +17,10 @@ const App: React.FC = () => {
   });
 
   const [error, setError] = useState<string | null>(null);
-  const [needsApiKey, setNeedsApiKey] = useState(false);
 
   useEffect(() => {
-    const checkApiKey = async () => {
-      // Access pre-configured aistudio object from global window
-      const aiStudio = (window as any).aistudio;
-      if (typeof aiStudio !== 'undefined') {
-        try {
-          const hasKey = await aiStudio.hasSelectedApiKey();
-          if (!hasKey && !process.env.API_KEY) {
-            setNeedsApiKey(true);
-          }
-        } catch (err) {
-          console.error("Key check failed:", err);
-        }
-      }
-    };
-    checkApiKey();
-    console.log("AEON Narrative Engine v2.1 - Initialized");
+    console.log("AEON Narrative Engine v2.2 - System Core Ready");
   }, []);
-
-  const handleOpenKeySelection = async () => {
-    const aiStudio = (window as any).aistudio;
-    if (aiStudio) {
-      // Trigger API key selection dialog
-      await aiStudio.openSelectKey();
-      // Assume success after triggering the selection per guidelines to avoid race conditions
-      setNeedsApiKey(false);
-    }
-  };
 
   const analyzeVideo = async (url: string, title: string, metadata: string) => {
     setState(prev => ({ ...prev, isAnalyzing: true }));
@@ -60,18 +31,15 @@ const App: React.FC = () => {
       setState({ url, duration: 0, sections: storySections, isAnalyzing: false });
     } catch (err: any) {
       console.error("Analysis Failure:", err);
-      const errorMessage = err.message || "";
-      setError(errorMessage || "Failed to analyze video assets.");
-      setState(prev => ({ ...prev, isAnalyzing: false }));
+      const errorMessage = err.message || "Failed to analyze video assets.";
       
-      // Handle API key specific errors and prompt re-selection if needed
-      if (errorMessage.includes("API key must be set") || errorMessage.includes("Requested entity was not found.")) {
-        setNeedsApiKey(true);
-        // If the entity specifically wasn't found (expired/invalid key), trigger selection again
-        if (errorMessage.includes("Requested entity was not found.") && (window as any).aistudio) {
-          (window as any).aistudio.openSelectKey();
-        }
+      if (errorMessage.includes("API key must be set")) {
+        setError("Configuration Required: API_KEY environment variable is missing. Please add it to your project environment variables and redeploy the application.");
+      } else {
+        setError(errorMessage);
       }
+      
+      setState(prev => ({ ...prev, isAnalyzing: false }));
     }
   };
 
@@ -102,34 +70,6 @@ const App: React.FC = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
-  if (needsApiKey) {
-    return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
-        <div className="absolute inset-0 pointer-events-none z-0">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-indigo-600/10 blur-[150px]" />
-        </div>
-        <div className="relative z-10 max-w-lg space-y-10">
-          <InfinityLogo size={80} className="mx-auto text-indigo-500 mb-6" />
-          <div className="space-y-4">
-            <h1 className="text-4xl font-black italic uppercase tracking-widest">Setup Required</h1>
-            <p className="text-white/40 uppercase text-[10px] tracking-[0.4em] leading-relaxed">
-              Aeon Core requires a linked Gemini API key from a paid GCP project to perform cinematic synthesis.
-            </p>
-          </div>
-          <button 
-            onClick={handleOpenKeySelection}
-            className="w-full py-6 bg-white text-black rounded-full font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-indigo-600 hover:text-white transition-all shadow-2xl"
-          >
-            <Key size={18} /> Select API Key
-          </button>
-          <p className="text-[9px] text-white/20 uppercase tracking-[0.2em]">
-            Learn more at <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline hover:text-white transition-colors">ai.google.dev/gemini-api/docs/billing</a>
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-indigo-600 antialiased font-sans">
@@ -171,9 +111,12 @@ const App: React.FC = () => {
 
           <div className="w-full relative z-10">
             {error && (
-              <div className="max-w-xl mx-auto mb-12 p-6 bg-red-900/20 border border-red-500/50 rounded-3xl flex items-center gap-4 text-red-200">
-                <AlertCircle className="shrink-0" />
-                <p className="text-[11px] font-black uppercase tracking-widest">{error}</p>
+              <div className="max-w-2xl mx-auto mb-12 p-8 bg-red-950/40 border border-red-500/30 rounded-[2rem] flex items-start gap-6 text-red-100 backdrop-blur-xl">
+                <AlertCircle className="shrink-0 text-red-500 mt-1" size={24} />
+                <div className="space-y-2">
+                  <p className="text-[12px] font-black uppercase tracking-widest text-red-500">System Configuration Required</p>
+                  <p className="text-[14px] leading-relaxed font-medium opacity-90">{error}</p>
+                </div>
               </div>
             )}
             <FileUpload 
