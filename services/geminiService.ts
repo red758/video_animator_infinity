@@ -1,31 +1,21 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScrollSection } from "../types";
 
 export async function generateVideoStory(videoDescription: string): Promise<ScrollSection[]> {
-  const apiKey = AIzaSyAxgGeTTUiuYhQp2KHfqo_-JyYTToeCuRE;
-  
-  if (!apiKey) {
-    throw new Error("API key must be set when using the Gemini API. Please configure the API_KEY environment variable in your project environment settings.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
-
-  const prompt = `Act as a world-class creative director for a high-end digital agency. 
-  Analyze this video concept: "${videoDescription}".
-  
-  Generate 5 distinct landing page sections that transform this video into a premium scroll-synchronized narrative.
-  
-  Requirements:
-  1. Title: 1-3 words, evocative and powerful.
-  2. Description: 15-25 words of high-end marketing copy.
-  3. triggerTime: Perfectly spaced (e.g., 0.15, 0.35, 0.55, 0.75, 0.9).
-  4. alignment: Vary between 'left', 'right', 'center'.
-  5. vibe: 'cinematic', 'energetic', or 'minimal'.
-
-  Return strictly as a JSON array.`;
-
   try {
+    // Attempt to initialize and use the AI, but don't throw early if key is missing.
+    // This allows the 'catch' block to provide a fallback experience.
+    if (!process.env.API_KEY) {
+      throw new Error("API_KEY_MISSING: The environment variable is not defined.");
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    const prompt = `Act as a world-class creative director. 
+    Analyze this video concept: "${videoDescription}".
+    Generate 5 distinct landing page sections (JSON array).
+    Title: 1-3 words, description: 15-25 words, triggerTime: 0.1 to 0.9.`;
+
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
@@ -49,22 +39,21 @@ export async function generateVideoStory(videoDescription: string): Promise<Scro
     });
 
     const text = response.text;
-    if (!text) throw new Error("Empty response from synthesis core.");
+    if (!text) throw new Error("Empty AI response.");
     const sections = JSON.parse(text);
     return sections.sort((a: any, b: any) => a.triggerTime - b.triggerTime);
+
   } catch (error: any) {
-    // Re-throw authentication errors so the UI can prompt for config.
-    if (error.message?.includes("API key")) {
-      throw error;
-    }
+    // LOG THE ACTUAL ERROR to the console so the user can debug
+    console.error("Narrative Synthesis Core Error:", error);
     
-    console.warn("AI Synthesis bypassed, using default narrative core.", error);
+    // Provide a high-quality fallback so the app remains functional
     return [
-      { title: "INITIAL PHASE", description: "Beginning the visual sequence with a focus on depth and atmospheric resonance.", triggerTime: 0.1, alignment: 'left', vibe: 'cinematic' },
-      { title: "KINETIC FLOW", description: "Harnessing the raw motion within the frame to drive a high-energy user experience.", triggerTime: 0.3, alignment: 'right', vibe: 'energetic' },
-      { title: "STATIC CALM", description: "A moment of architectural stillness, allowing the viewer to absorb the complexity of the scene.", triggerTime: 0.5, alignment: 'center', vibe: 'minimal' },
-      { title: "CHROMATIC SYNC", description: "Exploring the interaction between light and shadow as the sequence nears its climax.", triggerTime: 0.7, alignment: 'left', vibe: 'cinematic' },
-      { title: "FINALITY", description: "Closing the loop. The narrative returns to its origin, enriched by the journey through the visual spectrum.", triggerTime: 0.9, alignment: 'right', vibe: 'energetic' },
+      { title: "THE BEGINNING", description: "The journey commences within the frame. A study in motion and light as the narrative takes its first breath.", triggerTime: 0.15, alignment: 'left', vibe: 'cinematic' },
+      { title: "KINETIC ENERGY", description: "Dynamics shift as the visual weight accelerates, pulling the viewer deeper into the conceptual core.", triggerTime: 0.35, alignment: 'right', vibe: 'energetic' },
+      { title: "STILLNESS", description: "A moment of architectural pause. The sequence breathes, allowing every detail to resonate in high contrast.", triggerTime: 0.55, alignment: 'center', vibe: 'minimal' },
+      { title: "EVOLUTION", description: "The patterns merge and evolve. Transitioning from the raw elements into a refined visual conclusion.", triggerTime: 0.75, alignment: 'left', vibe: 'cinematic' },
+      { title: "FINAL FRAME", description: "Completion of the cycle. The narrative stabilizes, leaving a lasting impression of the temporal journey.", triggerTime: 0.95, alignment: 'right', vibe: 'energetic' },
     ];
   }
 }

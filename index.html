@@ -7,6 +7,10 @@
     <title>AEON // INFINITY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <script>
+      // Global shim for process.env to prevent crashes in static browser environments
+      window.process = window.process || { env: {} };
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;

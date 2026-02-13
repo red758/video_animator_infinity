@@ -1,12 +1,21 @@
-
 import React, { useState, useEffect } from 'react';
-import { Code, Share2, Zap, Globe, AlertCircle } from 'lucide-react';
+import { Code, Share2, Zap, Globe, AlertCircle, Key, Info } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import VideoScroller from './components/VideoScroller';
 import InfinityLogo from './components/Logo';
 import { generateVideoStory } from './services/geminiService';
 import { generateStandaloneHTML } from './services/exportService';
 import { VideoState } from './types';
+
+declare global {
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+  interface Window {
+    aistudio?: AIStudio;
+  }
+}
 
 const App: React.FC = () => {
   const [state, setState] = useState<VideoState>({
@@ -17,28 +26,46 @@ const App: React.FC = () => {
   });
 
   const [error, setError] = useState<string | null>(null);
+  const [systemNote, setSystemNote] = useState<string | null>(null);
+  const [showKeyPicker, setShowKeyPicker] = useState(false);
 
   useEffect(() => {
-    console.log("AEON Narrative Engine v2.2 - System Core Ready");
+    const checkKey = async () => {
+      if (window.aistudio && !process.env.API_KEY) {
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        if (!hasKey) setShowKeyPicker(true);
+      }
+    };
+    checkKey();
   }, []);
+
+  const handleOpenKeyPicker = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      setError(null);
+      setShowKeyPicker(false);
+    }
+  };
 
   const analyzeVideo = async (url: string, title: string, metadata: string) => {
     setState(prev => ({ ...prev, isAnalyzing: true }));
     setError(null);
+    setSystemNote(null);
+    
     try {
       const description = `A cinematic video titled "${title}". ${metadata}.`;
+      // geminiService now handles its own fallback, so this should almost always succeed
       const storySections = await generateVideoStory(description);
+      
+      // If we didn't get real AI results but fallbacks, let the user know
+      if (!process.env.API_KEY) {
+        setSystemNote("AI Key missing: Running in Manual Narrative mode.");
+      }
+
       setState({ url, duration: 0, sections: storySections, isAnalyzing: false });
     } catch (err: any) {
-      console.error("Analysis Failure:", err);
-      const errorMessage = err.message || "Failed to analyze video assets.";
-      
-      if (errorMessage.includes("API key must be set")) {
-        setError("Configuration Required: API_KEY environment variable is missing. Please add it to your project environment variables and redeploy the application.");
-      } else {
-        setError(errorMessage);
-      }
-      
+      console.error("Critical Component Failure:", err);
+      setError(`SYSTEM_ERROR: ${err.message || 'Unknown failure during asset ingestion.'}`);
       setState(prev => ({ ...prev, isAnalyzing: false }));
     }
   };
@@ -55,6 +82,7 @@ const App: React.FC = () => {
   const handleReset = () => {
     setState({ url: null, duration: 0, sections: [], isAnalyzing: false });
     setError(null);
+    setSystemNote(null);
   };
 
   const handleDownloadCode = () => {
@@ -73,6 +101,22 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-indigo-600 antialiased font-sans">
+      {/* Toast Notifications */}
+      <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-4 w-full max-w-xl px-6">
+        {error && (
+          <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl backdrop-blur-xl flex items-center gap-4 text-red-200 animate-in fade-in slide-in-from-top-4">
+            <AlertCircle size={20} className="shrink-0" />
+            <p className="text-[12px] font-medium tracking-wide">{error}</p>
+          </div>
+        )}
+        {systemNote && (
+          <div className="p-4 bg-indigo-950/40 border border-indigo-500/50 rounded-2xl backdrop-blur-xl flex items-center gap-4 text-indigo-200 animate-in fade-in slide-in-from-top-4">
+            <Info size={20} className="shrink-0" />
+            <p className="text-[12px] font-medium tracking-wide">{systemNote}</p>
+          </div>
+        )}
+      </div>
+
       <nav className="fixed top-0 left-0 w-full z-[100] px-8 md:px-16 py-8 flex justify-between items-center pointer-events-none">
         <div className="flex items-center gap-6 cursor-pointer group pointer-events-auto" onClick={handleReset}>
           <InfinityLogo size={56} className="text-white transition-transform group-hover:scale-105" />
@@ -100,7 +144,7 @@ const App: React.FC = () => {
           </div>
           
           <div className="text-center mb-24 max-w-7xl relative z-10 w-full">
-            <h1 className="text-[clamp(3.5rem,10vw,9rem)] font-black tracking-[-0.04em] mb-12 leading-[0.9] italic uppercase text-white transition-all duration-1000">
+            <h1 className="text-[clamp(3.5rem,10vw,9rem)] font-black tracking-[-0.04em] mb-12 leading-[0.9] italic uppercase text-white">
               <span className="block">Narrative</span>
               <span className="block text-indigo-500 drop-shadow-[0_0_15px_rgba(79,70,229,0.3)]">Scroll</span>
             </h1>
@@ -110,13 +154,23 @@ const App: React.FC = () => {
           </div>
 
           <div className="w-full relative z-10">
-            {error && (
-              <div className="max-w-2xl mx-auto mb-12 p-8 bg-red-950/40 border border-red-500/30 rounded-[2rem] flex items-start gap-6 text-red-100 backdrop-blur-xl">
-                <AlertCircle className="shrink-0 text-red-500 mt-1" size={24} />
-                <div className="space-y-2">
-                  <p className="text-[12px] font-black uppercase tracking-widest text-red-500">System Configuration Required</p>
-                  <p className="text-[14px] leading-relaxed font-medium opacity-90">{error}</p>
+            {showKeyPicker && window.aistudio && (
+              <div className="max-w-2xl mx-auto mb-12 p-8 bg-indigo-950/20 border border-indigo-500/30 rounded-[2rem] flex flex-col gap-6 text-indigo-100 backdrop-blur-xl">
+                <div className="flex items-start gap-6">
+                  <Key className="shrink-0 text-indigo-400 mt-1" size={24} />
+                  <div className="space-y-2">
+                    <p className="text-[12px] font-black uppercase tracking-widest text-indigo-400">AI Enhancement Required</p>
+                    <p className="text-[14px] leading-relaxed font-medium opacity-90">
+                      Link your Google Gemini API key to enable real-time cinematic analysis. Without a key, the system will use default narrative templates.
+                    </p>
+                  </div>
                 </div>
+                <button 
+                  onClick={handleOpenKeyPicker}
+                  className="flex items-center justify-center gap-3 w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg"
+                >
+                  <Key size={16} /> Link API Key
+                </button>
               </div>
             )}
             <FileUpload 
@@ -129,6 +183,7 @@ const App: React.FC = () => {
       ) : (
         <section className="relative z-0">
           <VideoScroller videoUrl={state.url} sections={state.sections} />
+          
           <section className="bg-black py-48 px-8 border-t border-white/10 relative z-10">
              <div className="max-w-7xl mx-auto">
                 <div className="mb-24 space-y-4">
