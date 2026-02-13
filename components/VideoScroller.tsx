@@ -22,8 +22,8 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
 
   useEffect(() => {
     const animate = (time: number) => {
-      // Linear interpolation for smooth scroll feel
-      const lerp = 0.08;
+      // Adjusted LERP for better responsiveness vs smoothness balance
+      const lerp = 0.075;
       currentProgress.current += (targetProgress.current - currentProgress.current) * lerp;
       
       const progress = currentProgress.current;
@@ -35,15 +35,16 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
         const diff = Math.abs(video.currentTime - targetTime);
         const timeSinceLastSeek = time - lastSeekTime.current;
 
-        // Skip frame if the decoder is still seeking or if the diff is negligible
-        // This is the core 'anti-lag' fix.
-        if (!video.seeking && video.readyState >= 2 && (diff > 0.04 || timeSinceLastSeek > 40)) {
+        // Increase threshold slightly to avoid jitter (0.05s)
+        // Only seek if significantly different or if some time has passed to let the decoder breathe
+        if (!video.seeking && video.readyState >= 2 && (diff > 0.05 || timeSinceLastSeek > 33)) {
           video.currentTime = targetTime;
           lastSeekTime.current = time;
         }
 
         if (videoLayerRef.current) {
-          const zoom = 1 + (progress * 0.04);
+          // Subtle zoom out effect for depth
+          const zoom = 1.05 - (progress * 0.05);
           videoLayerRef.current.style.transform = `scale3d(${zoom}, ${zoom}, 1)`;
         }
       }
@@ -58,14 +59,15 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
         if (!el) return;
 
         const distance = Math.abs(progress - section.triggerTime);
-        const window = 0.08;
-        const opacity = Math.max(0, 1 - (distance / window));
-        const isActive = distance < window;
+        const windowSize = 0.09; // Slightly wider window for smoother fades
+        const opacity = Math.max(0, 1 - (distance / windowSize));
+        const isActive = distance < windowSize;
 
         el.style.opacity = opacity.toString();
         el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
         
-        const yOffset = (progress - section.triggerTime) * 100;
+        // Parallel motion for content
+        const yOffset = (progress - section.triggerTime) * 120;
         el.style.transform = `translate3d(0, ${yOffset}px, 0)`;
 
         const title = el.querySelector('h2');
@@ -88,6 +90,7 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const scrollable = containerRef.current.offsetHeight - window.innerHeight;
+      // Clamp progress
       const prog = Math.max(0, Math.min(1, -rect.top / scrollable));
       targetProgress.current = prog;
     };
@@ -112,10 +115,10 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.8)_160%)]" />
         </div>
 
-        {/* Video Core - Removed Opacity 0 Guard */}
+        {/* Video Core */}
         <div 
           ref={videoLayerRef}
-          className="absolute inset-0 z-0 bg-[#050505] opacity-60 transition-opacity duration-1000"
+          className="absolute inset-0 z-0 bg-[#050505] opacity-65 transition-opacity duration-1000"
         >
           {!hasError ? (
             <video
@@ -139,7 +142,6 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
           {sections.map((section, idx) => (
             <div
               key={idx}
-              // Fix: Wrapped ref assignment in braces to return void and satisfy TypeScript Ref requirements.
               ref={(el) => { sectionRefs.current[idx] = el; }}
               className={`absolute inset-0 flex px-8 md:px-24 py-16 ${
                 section.alignment === 'left' ? 'justify-start items-center text-left' : 
@@ -162,23 +164,16 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
               </div>
             </div>
           ))}
-
-          {/* Initial Guide */}
-          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 transition-opacity duration-700"
-               style={{ opacity: targetProgress.current < 0.05 ? 0.3 : 0 }}>
-             <span className="text-[9px] font-black uppercase tracking-[0.6em] text-white italic">Scroll to Explore</span>
-             <div className="w-px h-12 bg-white/20" />
-          </div>
         </div>
 
         {/* HUD Data */}
         <div className="absolute bottom-16 left-12 z-40 flex items-end gap-12 pointer-events-none opacity-40">
            <div className="flex flex-col gap-3">
-              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">SYNC_ENGINE_LITE</span>
+              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">INFINITY_SYNC_ENGINE</span>
               <div className="flex items-center gap-6">
                  <InfinityLogo size={28} className="text-white/20" />
                  <div className="flex flex-col gap-1 font-mono text-[8px] text-white/30 uppercase tracking-[0.2em]">
-                    <span ref={hudSyncRef} className="tabular-nums text-indigo-400">0.0%</span>
+                    <span ref={hudSyncRef} className="tabular-nums text-indigo-400 font-bold">0.0%</span>
                  </div>
               </div>
            </div>
@@ -188,7 +183,7 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
         <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white/5 z-50 overflow-hidden">
            <div 
              ref={progressBarRef}
-             className="h-full bg-indigo-600" 
+             className="h-full bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.5)]" 
              style={{ width: '0%' }}
            />
         </div>

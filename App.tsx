@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Code, Share2, Zap, Globe, AlertCircle, Key, Info } from 'lucide-react';
+import { Code, Share2, Zap, Globe, AlertCircle, Key, Info, X } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import VideoScroller from './components/VideoScroller';
 import InfinityLogo from './components/Logo';
@@ -54,18 +54,16 @@ const App: React.FC = () => {
     
     try {
       const description = `A cinematic video titled "${title}". ${metadata}.`;
-      // geminiService now handles its own fallback, so this should almost always succeed
       const storySections = await generateVideoStory(description);
       
-      // If we didn't get real AI results but fallbacks, let the user know
       if (!process.env.API_KEY) {
-        setSystemNote("AI Key missing: Running in Manual Narrative mode.");
+        setSystemNote("AI Key missing: Manual mode active.");
       }
 
       setState({ url, duration: 0, sections: storySections, isAnalyzing: false });
     } catch (err: any) {
       console.error("Critical Component Failure:", err);
-      setError(`SYSTEM_ERROR: ${err.message || 'Unknown failure during asset ingestion.'}`);
+      setError(`ERR: ${err.message || 'Asset ingestion failed.'}`);
       setState(prev => ({ ...prev, isAnalyzing: false }));
     }
   };
@@ -101,18 +99,24 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-indigo-600 antialiased font-sans">
-      {/* Toast Notifications */}
-      <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] flex flex-col gap-4 w-full max-w-xl px-6">
+      {/* Minimized Notifications (Bottom Right) */}
+      <div className="fixed bottom-12 right-12 z-[200] flex flex-col gap-3 w-72">
         {error && (
-          <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-2xl backdrop-blur-xl flex items-center gap-4 text-red-200 animate-in fade-in slide-in-from-top-4">
-            <AlertCircle size={20} className="shrink-0" />
-            <p className="text-[12px] font-medium tracking-wide">{error}</p>
+          <div className="group p-3 bg-red-950/60 border border-red-500/30 rounded-xl backdrop-blur-xl flex items-center justify-between gap-3 text-red-200 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <AlertCircle size={14} className="shrink-0" />
+              <p className="text-[10px] font-bold tracking-wider uppercase truncate">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="opacity-40 hover:opacity-100 transition-opacity"><X size={14}/></button>
           </div>
         )}
         {systemNote && (
-          <div className="p-4 bg-indigo-950/40 border border-indigo-500/50 rounded-2xl backdrop-blur-xl flex items-center gap-4 text-indigo-200 animate-in fade-in slide-in-from-top-4">
-            <Info size={20} className="shrink-0" />
-            <p className="text-[12px] font-medium tracking-wide">{systemNote}</p>
+          <div className="group p-3 bg-indigo-950/60 border border-indigo-500/30 rounded-xl backdrop-blur-xl flex items-center justify-between gap-3 text-indigo-200 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center gap-2 overflow-hidden">
+              <Info size={14} className="shrink-0" />
+              <p className="text-[10px] font-bold tracking-wider uppercase truncate">{systemNote}</p>
+            </div>
+            <button onClick={() => setSystemNote(null)} className="opacity-40 hover:opacity-100 transition-opacity"><X size={14}/></button>
           </div>
         )}
       </div>
@@ -137,39 +141,34 @@ const App: React.FC = () => {
       </nav>
 
       {!state.url ? (
-        <main className="relative min-h-screen flex flex-col items-center px-6 pt-[20vh] pb-32 overflow-hidden bg-black">
+        <main className="relative min-h-screen flex flex-col items-center px-6 pt-[18vh] pb-32 overflow-hidden bg-black">
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
              <div className="absolute top-[-10%] left-[-10%] w-[80%] h-[80%] bg-indigo-600/20 blur-[150px] opacity-40" />
              <div className="absolute bottom-[-10%] right-[-10%] w-[80%] h-[80%] bg-purple-600/10 blur-[150px] opacity-30" />
           </div>
           
-          <div className="text-center mb-24 max-w-7xl relative z-10 w-full">
-            <h1 className="text-[clamp(3.5rem,10vw,9rem)] font-black tracking-[-0.04em] mb-12 leading-[0.9] italic uppercase text-white">
+          <div className="text-center mb-16 max-w-7xl relative z-10 w-full">
+            <h1 className="text-[clamp(3.5rem,10vw,9rem)] font-black tracking-[-0.04em] mb-8 leading-[0.9] italic uppercase text-white">
               <span className="block">Narrative</span>
               <span className="block text-indigo-500 drop-shadow-[0_0_15px_rgba(79,70,229,0.3)]">Scroll</span>
             </h1>
-            <p className="text-base md:text-xl text-white/60 font-medium max-w-2xl mx-auto leading-relaxed tracking-[0.05em] uppercase italic border-l-4 border-indigo-600 pl-8 text-left">
-              Crafting immersive, scroll-synchronized experiences from cinematic assets.
+            <p className="text-sm md:text-lg text-white/40 font-medium max-w-xl mx-auto leading-relaxed tracking-[0.1em] uppercase italic border-l-2 border-indigo-600/50 pl-6 text-left">
+              Bespoke scroll-synced interactive cinematic assets.
             </p>
           </div>
 
           <div className="w-full relative z-10">
             {showKeyPicker && window.aistudio && (
-              <div className="max-w-2xl mx-auto mb-12 p-8 bg-indigo-950/20 border border-indigo-500/30 rounded-[2rem] flex flex-col gap-6 text-indigo-100 backdrop-blur-xl">
-                <div className="flex items-start gap-6">
-                  <Key className="shrink-0 text-indigo-400 mt-1" size={24} />
-                  <div className="space-y-2">
-                    <p className="text-[12px] font-black uppercase tracking-widest text-indigo-400">AI Enhancement Required</p>
-                    <p className="text-[14px] leading-relaxed font-medium opacity-90">
-                      Link your Google Gemini API key to enable real-time cinematic analysis. Without a key, the system will use default narrative templates.
-                    </p>
-                  </div>
+              <div className="max-w-lg mx-auto mb-16 p-6 bg-white/[0.02] border border-white/5 rounded-3xl backdrop-blur-xl flex items-center justify-between gap-6 hover:bg-white/[0.04] transition-all">
+                <div className="flex items-center gap-4">
+                  <Key className="text-indigo-400 shrink-0" size={20} />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/60">AI Synthesis Disabled</p>
                 </div>
                 <button 
                   onClick={handleOpenKeyPicker}
-                  className="flex items-center justify-center gap-3 w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all shadow-lg"
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-black text-[9px] uppercase tracking-widest transition-all"
                 >
-                  <Key size={16} /> Link API Key
+                  Link Key
                 </button>
               </div>
             )}
