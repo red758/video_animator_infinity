@@ -3,16 +3,14 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScrollSection } from "../types";
 
 export async function generateVideoStory(videoDescription: string): Promise<ScrollSection[]> {
-  // Ultra-safe check for API_KEY
-  let apiKey = "";
-  try {
-    if (typeof process !== 'undefined' && process.env) {
-      apiKey = process.env.API_KEY || "";
-    }
-  } catch (e) {
-    console.warn("Process env access blocked.");
+  // Use the API key directly as it's injected by the environment after selection
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("API key must be set when using the Gemini API. Please click 'Select API Key' in the setup menu.");
   }
 
+  // Create a new instance right before use to ensure the latest API key is used
   const ai = new GoogleGenAI({ apiKey });
 
   const prompt = `Act as a world-class creative director for a high-end digital agency. 
@@ -52,11 +50,17 @@ export async function generateVideoStory(videoDescription: string): Promise<Scro
       }
     });
 
+    // Access .text property directly as it returns the string output
     const text = response.text;
-    if (!text) throw new Error("Empty response");
+    if (!text) throw new Error("Empty response from synthesis core.");
     const sections = JSON.parse(text);
     return sections.sort((a: any, b: any) => a.triggerTime - b.triggerTime);
-  } catch (error) {
+  } catch (error: any) {
+    // Bubble up API key related errors so the UI can handle re-authentication/selection
+    if (error.message?.includes("API key") || error.message?.includes("Requested entity was not found.")) {
+      throw error;
+    }
+    
     console.warn("AI Synthesis bypassed, using default narrative core.", error);
     return [
       { title: "INITIAL PHASE", description: "Beginning the visual sequence with a focus on depth and atmospheric resonance.", triggerTime: 0.1, alignment: 'left', vibe: 'cinematic' },

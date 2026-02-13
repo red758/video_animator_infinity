@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Code, Layers, ArrowUpRight, Share2, Zap, Globe } from 'lucide-react';
+import { Code, Share2, Zap, Globe, AlertCircle, Key } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import VideoScroller from './components/VideoScroller';
 import InfinityLogo from './components/Logo';
 import { generateVideoStory } from './services/geminiService';
 import { generateStandaloneHTML } from './services/exportService';
 import { VideoState } from './types';
+
+// The global declaration for 'aistudio' is removed to avoid conflicts with 
+// pre-configured types in the execution environment. We access it via (window as any).
 
 const App: React.FC = () => {
   const [state, setState] = useState<VideoState>({
@@ -16,19 +19,59 @@ const App: React.FC = () => {
     isAnalyzing: false,
   });
 
+  const [error, setError] = useState<string | null>(null);
+  const [needsApiKey, setNeedsApiKey] = useState(false);
+
   useEffect(() => {
-    console.log("AEON Narrative Engine v2.0 - Online");
+    const checkApiKey = async () => {
+      // Access pre-configured aistudio object from global window
+      const aiStudio = (window as any).aistudio;
+      if (typeof aiStudio !== 'undefined') {
+        try {
+          const hasKey = await aiStudio.hasSelectedApiKey();
+          if (!hasKey && !process.env.API_KEY) {
+            setNeedsApiKey(true);
+          }
+        } catch (err) {
+          console.error("Key check failed:", err);
+        }
+      }
+    };
+    checkApiKey();
+    console.log("AEON Narrative Engine v2.1 - Initialized");
   }, []);
+
+  const handleOpenKeySelection = async () => {
+    const aiStudio = (window as any).aistudio;
+    if (aiStudio) {
+      // Trigger API key selection dialog
+      await aiStudio.openSelectKey();
+      // Assume success after triggering the selection per guidelines to avoid race conditions
+      setNeedsApiKey(false);
+    }
+  };
 
   const analyzeVideo = async (url: string, title: string, metadata: string) => {
     setState(prev => ({ ...prev, isAnalyzing: true }));
+    setError(null);
     try {
       const description = `A cinematic video titled "${title}". ${metadata}.`;
       const storySections = await generateVideoStory(description);
       setState({ url, duration: 0, sections: storySections, isAnalyzing: false });
-    } catch (error) {
-      console.error("Analysis Failure:", error);
+    } catch (err: any) {
+      console.error("Analysis Failure:", err);
+      const errorMessage = err.message || "";
+      setError(errorMessage || "Failed to analyze video assets.");
       setState(prev => ({ ...prev, isAnalyzing: false }));
+      
+      // Handle API key specific errors and prompt re-selection if needed
+      if (errorMessage.includes("API key must be set") || errorMessage.includes("Requested entity was not found.")) {
+        setNeedsApiKey(true);
+        // If the entity specifically wasn't found (expired/invalid key), trigger selection again
+        if (errorMessage.includes("Requested entity was not found.") && (window as any).aistudio) {
+          (window as any).aistudio.openSelectKey();
+        }
+      }
     }
   };
 
@@ -43,6 +86,7 @@ const App: React.FC = () => {
 
   const handleReset = () => {
     setState({ url: null, duration: 0, sections: [], isAnalyzing: false });
+    setError(null);
   };
 
   const handleDownloadCode = () => {
@@ -59,14 +103,38 @@ const App: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
+  if (needsApiKey) {
+    return (
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-8 text-center">
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-indigo-600/10 blur-[150px]" />
+        </div>
+        <div className="relative z-10 max-w-lg space-y-10">
+          <InfinityLogo size={80} className="mx-auto text-indigo-500 mb-6" />
+          <div className="space-y-4">
+            <h1 className="text-4xl font-black italic uppercase tracking-widest">Setup Required</h1>
+            <p className="text-white/40 uppercase text-[10px] tracking-[0.4em] leading-relaxed">
+              Aeon Core requires a linked Gemini API key from a paid GCP project to perform cinematic synthesis.
+            </p>
+          </div>
+          <button 
+            onClick={handleOpenKeySelection}
+            className="w-full py-6 bg-white text-black rounded-full font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-indigo-600 hover:text-white transition-all shadow-2xl"
+          >
+            <Key size={18} /> Select API Key
+          </button>
+          <p className="text-[9px] text-white/20 uppercase tracking-[0.2em]">
+            Learn more at <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline hover:text-white transition-colors">ai.google.dev/gemini-api/docs/billing</a>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white selection:bg-indigo-600 antialiased font-sans">
-      {/* Dynamic Header */}
       <nav className="fixed top-0 left-0 w-full z-[100] px-8 md:px-16 py-8 flex justify-between items-center pointer-events-none">
-        <div 
-          className="flex items-center gap-6 cursor-pointer group pointer-events-auto"
-          onClick={handleReset}
-        >
+        <div className="flex items-center gap-6 cursor-pointer group pointer-events-auto" onClick={handleReset}>
           <InfinityLogo size={56} className="text-white transition-transform group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="font-black text-4xl tracking-[0.3em] uppercase italic leading-none text-white">AEON</span>
@@ -86,7 +154,6 @@ const App: React.FC = () => {
 
       {!state.url ? (
         <main className="relative min-h-screen flex flex-col items-center px-6 pt-[20vh] pb-32 overflow-hidden bg-black">
-          {/* Luminous Glow Backgrounds */}
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
              <div className="absolute top-[-10%] left-[-10%] w-[80%] h-[80%] bg-indigo-600/20 blur-[150px] opacity-40" />
              <div className="absolute bottom-[-10%] right-[-10%] w-[80%] h-[80%] bg-purple-600/10 blur-[150px] opacity-30" />
@@ -103,6 +170,12 @@ const App: React.FC = () => {
           </div>
 
           <div className="w-full relative z-10">
+            {error && (
+              <div className="max-w-xl mx-auto mb-12 p-6 bg-red-900/20 border border-red-500/50 rounded-3xl flex items-center gap-4 text-red-200">
+                <AlertCircle className="shrink-0" />
+                <p className="text-[11px] font-black uppercase tracking-widest">{error}</p>
+              </div>
+            )}
             <FileUpload 
               onFileSelect={handleFileSelect} 
               onSampleSelect={handleSampleSelect}
@@ -113,8 +186,6 @@ const App: React.FC = () => {
       ) : (
         <section className="relative z-0">
           <VideoScroller videoUrl={state.url} sections={state.sections} />
-
-          {/* Integration Blueprint Section */}
           <section className="bg-black py-48 px-8 border-t border-white/10 relative z-10">
              <div className="max-w-7xl mx-auto">
                 <div className="mb-24 space-y-4">
@@ -150,7 +221,6 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
-            
             <div className="absolute bottom-12 flex justify-between w-full px-12 text-[10px] font-black tracking-[1em] text-white/20 uppercase italic">
               <span>AEON COLLECTIVE</span>
               <span>EST. 2025</span>
