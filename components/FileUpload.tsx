@@ -10,7 +10,7 @@ const SAMPLES = [
     url: 'deep_space.mp4',
     icon: <Rocket size={48} />,
     color: 'from-indigo-900/60',
-    description: 'Deep Space Cinematic Narrative'
+    description: 'Deep Space Cinematic Experience'
   },
   { 
     id: 'summit', 
@@ -18,7 +18,7 @@ const SAMPLES = [
     url: 'particle_video.mp4',
     icon: <Mountain size={48} />,
     color: 'from-emerald-900/60',
-    description: 'High Alpine Vista Experience'
+    description: 'Motioin Particle Experience'
   },
   { 
     id: 'neon', 
@@ -26,7 +26,7 @@ const SAMPLES = [
     url: 'bubble.mp4',
     icon: <Building2 size={48} />,
     color: 'from-rose-900/60',
-    description: 'Urban Kinetic Energy Loop'
+    description: 'Bubble Experience'
   }
 ];
 
