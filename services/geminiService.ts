@@ -3,8 +3,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScrollSection } from "../types";
 
 export async function generateVideoStory(videoDescription: string): Promise<ScrollSection[]> {
-  // Initialize inside the function to be safer and more resilient to environment setup
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Safe environment check
+  const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : '';
+  const ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
   const prompt = `Act as a world-class creative director for a high-end digital agency. 
   Analyze this video concept: "${videoDescription}".
