@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ScrollSection } from "../types";
 
 export async function generateVideoStory(videoDescription: string): Promise<ScrollSection[]> {
-  const apiKey = process.env.API_KEY;
+  const apiKey = AIzaSyAxgGeTTUiuYhQp2KHfqo_-JyYTToeCuRE;
   
   if (!apiKey) {
     throw new Error("API key must be set when using the Gemini API. Please configure the API_KEY environment variable in your project environment settings.");
