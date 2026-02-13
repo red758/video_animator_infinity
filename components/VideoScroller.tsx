@@ -17,53 +17,64 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
   const hudSyncRef = useRef<HTMLSpanElement>(null);
 
   const [isReady, setIsReady] = useState(false);
+  const [hasError, setHasError] = useState(false);
   
   const targetProgress = useRef(0);
   const currentProgress = useRef(0);
   const lastTime = useRef(0);
   const lastSeekTime = useRef(0);
 
+  // Safety fallback for "isReady" - reveal after 2 seconds regardless
   useEffect(() => {
-    // Initial setup
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     if (videoRef.current) {
       videoRef.current.load();
     }
 
     const animate = (time: number) => {
-      // Smoother interpolation logic
       const deltaTime = time - lastTime.current;
       lastTime.current = time;
 
-      // Adjust LERP based on frame time for consistency
-      const lerpFactor = 0.085;
+      // Smoother interpolation logic
+      const lerpFactor = 0.07;
       currentProgress.current += (targetProgress.current - currentProgress.current) * lerpFactor;
 
       const video = videoRef.current;
       const progress = currentProgress.current;
 
-      // 1. Optimized Video Scrubbing
+      // 1. ADVANCED VIDEO SCRUBBING
       if (video && video.duration && !isNaN(video.duration)) {
         const targetTime = video.duration * progress;
-        const timeSinceLastSeek = time - lastSeekTime.current;
         const diff = Math.abs(video.currentTime - targetTime);
+        const timeSinceLastSeek = time - lastSeekTime.current;
 
-        // STRATEGY: Don't overwhelm the decoder. 
-        // Only seek if we have a meaningful difference AND we aren't spamming.
-        if (!video.seeking && (diff > 0.033 || timeSinceLastSeek > 40)) {
+        /**
+         * SMART SEEK LOGIC:
+         * - Avoid seeking if the video is currently 'seeking' (prevents queue buildup)
+         * - Only seek if change is significant (> 1/30th of a second)
+         * - Use readyState check: 4 (HAVE_ENOUGH_DATA) or 3 (HAVE_FUTURE_DATA)
+         */
+        if (!video.seeking && video.readyState >= 2 && (diff > 0.04 || timeSinceLastSeek > 50)) {
           video.currentTime = targetTime;
           lastSeekTime.current = time;
         }
 
-        // Apply hardware accelerated transforms to the video container
+        // Apply hardware accelerated transforms
         if (videoLayerRef.current) {
-          const zoom = 1 + progress * 0.045;
-          const brightness = 0.45 + (1 - progress) * 0.2;
+          const zoom = 1 + progress * 0.04;
+          const brightness = 0.4 + (1 - progress) * 0.25;
           videoLayerRef.current.style.transform = `scale3d(${zoom}, ${zoom}, 1)`;
           videoLayerRef.current.style.opacity = brightness.toString();
         }
       }
 
-      // 2. Direct DOM UI Updates (Bypassing React for high-frequency elements)
+      // 2. Direct DOM UI Updates (Performance Critical)
       if (progressBarRef.current) {
         progressBarRef.current.style.width = `${progress * 100}%`;
       }
@@ -77,18 +88,17 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
         if (!el) return;
 
         const distance = Math.abs(progress - section.triggerTime);
-        const visibilityWindow = 0.07;
+        const visibilityWindow = 0.08; // Slightly wider for smoother entrance
         const isActive = distance < visibilityWindow;
         
-        // Advanced opacity curve for smooth fade
+        // Parabolic opacity curve
         const opacity = Math.max(0, 1 - (distance / visibilityWindow));
-        const yOffset = (progress - section.triggerTime) * 140;
+        const yOffset = (progress - section.triggerTime) * 120;
 
         el.style.opacity = opacity.toString();
-        el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
+        el.style.visibility = opacity > 0.001 ? 'visible' : 'hidden';
         el.style.transform = `translate3d(0, ${yOffset}px, 0)`;
 
-        // Handle internal text animations
         const title = el.querySelector('h2');
         const body = el.querySelector('.text-wrapper');
         if (title && body) {
@@ -110,9 +120,7 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
     const handleScroll = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const totalHeight = containerRef.current.offsetHeight;
-      const viewportHeight = window.innerHeight;
-      const scrollable = totalHeight - viewportHeight;
+      const scrollable = containerRef.current.offsetHeight - window.innerHeight;
       const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
       targetProgress.current = progress;
     };
@@ -129,36 +137,56 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
   return (
     <div 
       ref={containerRef} 
-      className="relative w-full h-[1200vh] bg-black"
+      className="relative w-full h-[1400vh] bg-black"
       id="aeon-engine"
     >
       <div className="sticky top-0 left-0 w-full h-[100vh] h-[100dvh] overflow-hidden bg-black">
         
-        {/* Cinematic Overlays */}
+        {/* Cinematic Lighting Overlays */}
         <div className="absolute inset-0 z-10 pointer-events-none">
-          <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-black via-black/40 to-transparent" />
-          <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-black via-black/40 to-transparent" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.95)_180%)]" />
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-black via-black/40 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.98)_160%)]" />
         </div>
 
-        {/* Video Engine - Highly Optimized Container */}
+        {/* Temporal Loading State */}
+        {!isReady && !hasError && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black">
+            <div className="flex flex-col items-center gap-6">
+              <InfinityLogo size={64} className="text-indigo-600 animate-pulse" />
+              <div className="text-[10px] font-black uppercase tracking-[0.6em] text-white/20 animate-pulse italic">Initializing Buffer</div>
+            </div>
+          </div>
+        )}
+
+        {/* Video Engine Container */}
         <div 
           ref={videoLayerRef}
-          className="absolute inset-0 z-0 will-change-transform will-change-opacity transition-opacity duration-1000"
+          className="absolute inset-0 z-0 will-change-transform will-change-opacity transition-opacity duration-1000 bg-black"
           style={{ opacity: isReady ? 0.6 : 0 }}
         >
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            playsInline
-            muted
-            preload="auto"
-            onLoadedData={() => setIsReady(true)}
-            className="w-full h-full object-cover"
-          />
+          {!hasError ? (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              playsInline
+              muted
+              preload="auto"
+              onLoadedData={() => setIsReady(true)}
+              onError={() => {
+                setHasError(true);
+                setIsReady(true);
+              }}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-indigo-950 to-black flex items-center justify-center">
+               <span className="text-[10px] font-black text-white/10 uppercase tracking-[1em]">Source Link Error</span>
+            </div>
+          )}
         </div>
 
-        {/* Narrative Engine Content */}
+        {/* Narrative Content Layer */}
         <div className="absolute inset-0 z-20 flex pointer-events-none">
           {sections.map((section, idx) => (
             <div
@@ -185,12 +213,19 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections }) => 
               </div>
             </div>
           ))}
+          
+          {/* Initial Hint (Only visible at start) */}
+          <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 transition-opacity duration-1000 pointer-events-none"
+               style={{ opacity: currentProgress.current < 0.05 ? 0.3 : 0 }}>
+             <span className="text-[9px] font-black uppercase tracking-[0.6em] text-white italic">Scroll to Explore</span>
+             <div className="w-px h-12 bg-gradient-to-b from-white to-transparent" />
+          </div>
         </div>
 
-        {/* HUD Telemetry */}
+        {/* HUD UI */}
         <div className="absolute bottom-16 left-12 z-40 flex items-end gap-12 pointer-events-none opacity-40">
            <div className="flex flex-col gap-3">
-              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">Engine_Live_v4</span>
+              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-[0.4em] italic">Stream_Sync_v5</span>
               <div className="flex items-center gap-6">
                  <InfinityLogo size={28} className="text-white/20" />
                  <div className="h-8 w-[1px] bg-white/10" />

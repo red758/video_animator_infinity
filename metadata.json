@@ -1,7 +1,5 @@
 {
   "name": "AEON // INFINITY",
   "description": "Narrative Scroll: A high-end experience builder that turns any video into a scroll-synchronized interactive narrative, powered by Aeon Studio Core.",
-  "requestFramePermissions": [
-    "camera"
-  ]
+  "requestFramePermissions": []
 }
