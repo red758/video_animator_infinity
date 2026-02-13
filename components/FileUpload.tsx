@@ -7,23 +7,23 @@ const SAMPLES = [
   { 
     id: 'cosmos', 
     name: 'VOID', 
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-deep-space-1156-large.mp4',
+    url: 'deep_space.mp4',
     icon: <Rocket size={48} />,
     color: 'from-indigo-900/60',
     description: 'Deep Space Cinematic Narrative'
   },
   { 
     id: 'summit', 
-    name: 'ALPINE', 
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-going-down-a-curved-highway-down-a-mountain-41545-large.mp4',
+    name: 'Particle', 
+    url: 'particle_video.mp4',
     icon: <Mountain size={48} />,
     color: 'from-emerald-900/60',
     description: 'High Alpine Vista Experience'
   },
   { 
     id: 'neon', 
-    name: 'PULSE', 
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-night-city-street-lights-and-traffic-1161-large.mp4',
+    name: 'bubble', 
+    url: 'bubble.mp4',
     icon: <Building2 size={48} />,
     color: 'from-rose-900/60',
     description: 'Urban Kinetic Energy Loop'
