@@ -126,7 +126,7 @@ const App: React.FC = () => {
           <InfinityLogo size={56} className="text-white transition-transform group-hover:scale-105" />
           <div className="flex flex-col">
             <span className="font-black text-4xl tracking-[0.3em] uppercase italic leading-none text-white">AEON</span>
-            <span className="text-[10px] font-black text-indigo-500 tracking-[0.6em] uppercase mt-2 opacity-80">Studio Core</span>
+            <span className="text-[10px] font-black text-indigo-500 tracking-[0.6em] uppercase mt-2 opacity-80">Infinity</span>
           </div>
         </div>
         
