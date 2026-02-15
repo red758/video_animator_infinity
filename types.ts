@@ -12,4 +12,6 @@ export interface VideoState {
   duration: number;
   sections: ScrollSection[];
   isAnalyzing: boolean;
+  brandName: string;
+  sensitivity: number;
 }

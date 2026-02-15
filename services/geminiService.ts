@@ -1,7 +1,8 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { ScrollSection } from "../types";
 
-export async function generateVideoStory(videoDescription: string): Promise<ScrollSection[]> {
+export async function generateVideoStory(videoDescription: string, brandName: string = "Narrative"): Promise<ScrollSection[]> {
   try {
     if (!process.env.API_KEY) {
       throw new Error("API_KEY_MISSING");
@@ -9,15 +10,21 @@ export async function generateVideoStory(videoDescription: string): Promise<Scro
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-    const prompt = `Act as a world-class creative director for 'Infinity', an AI startup. 
+    const prompt = `Act as a world-class creative director for a brand called '${brandName}'. 
     Analyze this video: "${videoDescription}".
+    Task: Create a 5-section narrative that connects the visuals in this video to the brand '${brandName}'.
     
-    The company vision is: "Infinity is an early-stage AI startup building next-generation intelligent systems that make advanced technology simple, natural, and accessible to everyone. We believe technology should have no limits."
+    CRITICAL SPACING RULES:
+    - Section 1: triggerTime around 0.15
+    - Section 2: triggerTime around 0.35
+    - Section 3: triggerTime around 0.55
+    - Section 4: triggerTime around 0.75
+    - Section 5: triggerTime around 0.90
     
     Generate 5 cinematic landing page sections (JSON array).
-    Titles should be powerful (1-3 words). 
-    Descriptions should be evocative (15-25 words).
-    Use trigger times between 0.1 and 0.9.`;
+    - Titles: 1-3 powerful words (e.g. "BEYOND LIMITS").
+    - Descriptions: 15-20 concise words.
+    - Alignment: Vary (left, right, center).`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -47,45 +54,14 @@ export async function generateVideoStory(videoDescription: string): Promise<Scro
     return sections.sort((a: any, b: any) => a.triggerTime - b.triggerTime);
 
   } catch (error: any) {
-    console.warn("Using bespoke Infinity fallback narrative.");
-    
-    // Updated fallback content specifically for the Infinity startup
     return [
       { 
-        title: "NO LIMITS", 
-        description: "Founded on the core belief that technology should have no boundaries. We are redefining the horizon of human potential.", 
-        triggerTime: 0.12, 
-        alignment: 'left', 
-        vibe: 'cinematic' 
-      },
-      { 
-        title: "NEXT-GEN SYSTEMS", 
-        description: "Building intelligent systems that make advanced technology simple, natural, and accessible to every individual on the planet.", 
-        triggerTime: 0.32, 
-        alignment: 'right', 
-        vibe: 'energetic' 
-      },
-      { 
-        title: "SEAMLESS SYNC", 
-        description: "Our AI-powered applications integrate invisibly into daily life, making the complex feel effortless and the future feel present.", 
-        triggerTime: 0.52, 
+        title: "SYSTEM_READY", 
+        description: "Your engine is active. architect your cinematic narrative using the edit tools provided.", 
+        triggerTime: 0.25, 
         alignment: 'center', 
-        vibe: 'minimal' 
-      },
-      { 
-        title: "FOUNDATIONAL CORE", 
-        description: "We operate at the source, building the fundamental systems required for future-scale innovation and global intelligence.", 
-        triggerTime: 0.72, 
-        alignment: 'left', 
         vibe: 'cinematic' 
-      },
-      { 
-        title: "INFINITY AI", 
-        description: "An early-stage vision led by independent innovation. We are just beginning to architect the next era of technology.", 
-        triggerTime: 0.92, 
-        alignment: 'right', 
-        vibe: 'energetic' 
-      },
+      }
     ];
   }
 }

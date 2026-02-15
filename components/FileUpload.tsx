@@ -1,34 +1,6 @@
 
 import React from 'react';
-import { Upload, Mountain, Rocket, Building2, ChevronRight } from 'lucide-react';
-import InfinityLogo from './Logo';
-
-const SAMPLES = [
-  { 
-    id: 'cosmos', 
-    name: 'VOID', 
-    url: 'deep_space.mp4',
-    icon: <Rocket size={48} />,
-    color: 'from-indigo-900/60',
-    description: 'Deep Space Cinematic Experience'
-  },
-  { 
-    id: 'summit', 
-    name: 'Particle', 
-    url: 'particle_video.mp4',
-    icon: <Mountain size={48} />,
-    color: 'from-emerald-900/60',
-    description: 'Particle Experience'
-  },
-  { 
-    id: 'neon', 
-    name: 'Oceanic', 
-    url: 'bubble.mp4',
-    icon: <Building2 size={48} />,
-    color: 'from-rose-900/60',
-    description: 'Underwater experience'
-  }
-];
+import { Upload, Play, Rocket, Mountain, Building, Sparkles } from 'lucide-react';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -36,106 +8,100 @@ interface FileUploadProps {
   isAnalyzing: boolean;
 }
 
+const SAMPLES = [
+  { 
+    id: '1', 
+    name: 'Cosmos', 
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-deep-space-1156-large.mp4', 
+    icon: <Rocket size={18}/>,
+    desc: 'Deep Space'
+  },
+  { 
+    id: '2', 
+    name: 'Alpine', 
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-going-down-a-curved-highway-down-a-mountain-41545-large.mp4', 
+    icon: <Mountain size={18}/>,
+    desc: 'Mountain Flow'
+  },
+  { 
+    id: '3', 
+    name: 'Urban', 
+    url: 'https://assets.mixkit.co/videos/preview/mixkit-night-city-street-lights-and-traffic-1161-large.mp4', 
+    icon: <Building size={18}/>,
+    desc: 'City Pulse'
+  },
+];
+
 const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, onSampleSelect, isAnalyzing }) => {
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith('video/')) onFileSelect(file);
+    if (file) onFileSelect(file);
   };
 
-  return (
-    <div className="max-w-7xl w-full mx-auto space-y-32 relative z-20 px-4">
-      <div className="relative group p-1 rounded-[4rem] bg-white/[0.02] border border-white/5 backdrop-blur-3xl shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
-        <div className="p-10 md:p-16 flex flex-col items-center">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight italic text-white/90">Mount Ingest</h2>
+  if (isAnalyzing) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] gap-6 animate-in fade-in duration-500">
+        <div className="relative">
+          <div className="w-16 h-16 border border-indigo-500/10 rounded-full animate-ping absolute inset-0" />
+          <div className="w-16 h-16 border border-white/5 rounded-2xl flex items-center justify-center text-indigo-500 bg-black/40 backdrop-blur-3xl shadow-2xl">
+            <Sparkles size={24} className="animate-pulse" />
           </div>
-
-          <label className={`w-full group relative cursor-pointer block p-12 md:p-20 border border-white/10 rounded-[3.5rem] transition-all duration-700 overflow-hidden text-center ${
-            isAnalyzing ? 'bg-indigo-600/5' : 'bg-white/[0.01] hover:bg-white/[0.03]'
-          }`}>
-            <input type="file" accept="video/*" onChange={handleFileChange} className="hidden" disabled={isAnalyzing} />
-            
-            <div className="flex flex-col items-center gap-8">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-[1.5rem] bg-black border border-white/10 flex items-center justify-center text-white/20 group-hover:text-indigo-400 group-hover:border-indigo-500/30 transition-all duration-700 relative z-10 shadow-2xl">
-                  <Upload size={32} />
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <p className="text-xl md:text-2xl font-black tracking-widest uppercase italic text-white/80">Select Local Asset</p>
-                <p className="text-[10px] text-white/20 uppercase tracking-[0.4em] font-bold">Hardware Link // Local File</p>
-              </div>
-
-              <div className="flex items-center gap-3 text-[10px] font-black text-indigo-500 opacity-0 group-hover:opacity-100 transition-all duration-500 uppercase tracking-[0.3em] italic">
-                Initialize Synthesis <ChevronRight size={14} />
-              </div>
-            </div>
-
-            <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-               <div className="absolute top-0 left-0 w-full h-[1px] bg-indigo-500/40 animate-[scan_5s_infinite_linear]" />
-            </div>
-          </label>
+        </div>
+        <div className="text-center space-y-3">
+          <p className="text-[9px] font-black uppercase tracking-[0.8em] text-white">Synthesizing Narrative</p>
+          <div className="flex items-center justify-center gap-1.5 opacity-20">
+             <div className="w-1 h-1 bg-white rounded-full animate-bounce [animation-delay:-0.3s]" />
+             <div className="w-1 h-1 bg-white rounded-full animate-bounce [animation-delay:-0.15s]" />
+             <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {isAnalyzing && (
-        <div className="flex flex-col items-center gap-10">
-           <InfinityLogo size={80} className="text-indigo-500 animate-pulse" />
-           <div className="text-center space-y-4">
-              <p className="text-[11px] font-black uppercase tracking-[1em] text-indigo-500/60 italic">Mapping Temporal Geometry</p>
-              <div className="w-64 h-[2px] bg-white/5 relative overflow-hidden mx-auto rounded-full">
-                 <div className="absolute inset-0 bg-indigo-600 animate-[loading-bar_1.5s_infinite_linear]" />
+  return (
+    <div className="space-y-6 w-full max-w-3xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {SAMPLES.map(sample => (
+          <button 
+            key={sample.id}
+            onClick={() => onSampleSelect(sample.url, sample.name)}
+            className="group relative bg-white/[0.01] border border-white/5 p-5 rounded-[1.2rem] hover:bg-white/[0.03] hover:border-white/10 transition-all text-left overflow-hidden"
+          >
+            <div className="relative z-10 flex flex-col gap-4">
+              <div className="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center text-white/10 group-hover:text-white transition-colors">
+                {sample.icon}
               </div>
-           </div>
-        </div>
-      )}
+              <div>
+                <h3 className="text-[10px] font-black uppercase tracking-widest">{sample.name}</h3>
+                <p className="text-[6px] font-bold uppercase tracking-widest text-white/10">{sample.desc}</p>
+              </div>
+            </div>
+            <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Play size={12} className="fill-current" />
+            </div>
+          </button>
+        ))}
+      </div>
 
-      {!isAnalyzing && (
-        <div className="pt-24 border-t border-white/5">
-           <p className="text-[12px] font-black text-white/20 uppercase tracking-[1.2em] text-center mb-20 italic">Verified Studio Data</p>
-           
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-              {SAMPLES.map((sample) => (
-                <button
-                  key={sample.id}
-                  onClick={() => onSampleSelect(sample.url, sample.name)}
-                  className="group relative h-80 rounded-[3.5rem] bg-white/[0.02] border border-white/5 hover:border-indigo-500/40 flex flex-col justify-center items-center px-10 transition-all duration-500 hover:scale-[1.05] overflow-hidden shadow-[0_40px_80px_rgba(0,0,0,0.6)]"
-                >
-                  {/* High contrast gradient background */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${sample.color} via-black/40 to-black opacity-30 group-hover:opacity-100 transition-opacity duration-700`} />
-                  
-                  <div className="relative z-10 flex flex-col items-center text-center gap-8">
-                    <div className="w-24 h-24 rounded-[2rem] bg-black/60 backdrop-blur-2xl border border-white/10 flex items-center justify-center text-white/20 group-hover:text-white group-hover:border-white/30 transition-all duration-700 shadow-2xl">
-                      {sample.icon}
-                    </div>
-                    <div>
-                      <h3 className="text-3xl font-black uppercase tracking-[0.3em] italic group-hover:text-white transition-colors mb-4">{sample.name}</h3>
-                      <p className="text-[11px] text-white/20 uppercase tracking-[0.15em] font-bold group-hover:text-indigo-300 transition-colors max-w-[200px] leading-relaxed">
-                        {sample.description}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Decorative hardware corners */}
-                  <div className="absolute top-10 left-10 w-4 h-4 border-t-2 border-l-2 border-white/5 group-hover:border-indigo-500/50 transition-colors" />
-                  <div className="absolute bottom-10 right-10 w-4 h-4 border-b-2 border-r-2 border-white/5 group-hover:border-indigo-500/50 transition-colors" />
-                </button>
-              ))}
-           </div>
-        </div>
-      )}
+      <div className="flex items-center gap-3 py-2 opacity-5">
+        <div className="h-px flex-1 bg-white" />
+        <span className="text-[6px] font-black tracking-[0.4em]">CUSTOM ASSET</span>
+        <div className="h-px flex-1 bg-white" />
+      </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes loading-bar {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes scan {
-          0% { transform: translateY(0); }
-          100% { transform: translateY(600px); }
-        }
-      `}} />
+      <label className="block w-full cursor-pointer group">
+        <input type="file" className="hidden" accept="video/*" onChange={handleFile} />
+        <div className="bg-white/[0.01] border border-white/5 border-dashed p-8 rounded-[1.5rem] group-hover:bg-white/[0.02] group-hover:border-white/10 transition-all flex flex-col items-center gap-4 text-center">
+          <div className="w-10 h-10 bg-white/5 text-white/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Upload size={18} />
+          </div>
+          <div>
+            <h2 className="text-[9px] font-bold tracking-[0.2em] uppercase text-white/40">Import local video</h2>
+            <p className="text-white/5 text-[6px] font-black tracking-widest mt-1">MP4 / WEBM / MOV</p>
+          </div>
+        </div>
+      </label>
     </div>
   );
 };
