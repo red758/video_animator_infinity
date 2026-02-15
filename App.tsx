@@ -48,18 +48,18 @@ const App: React.FC = () => {
     return (
       <div className="bg-[#050505] text-white min-h-screen selection:bg-indigo-500/50">
         <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[94%] max-w-6xl z-[100] px-8 py-4 flex justify-between items-center bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl">
-          <div className="flex items-center gap-4">
-            <InfinityLogo size={24} className="text-indigo-500" />
+          <div className="flex items-center gap-5">
+            <InfinityLogo size={32} className="text-indigo-700" />
             <div className="flex flex-col">
-              <span className="text-[12px] font-black tracking-widest text-white">AEON_SCROLL</span>
-              <span className="text-[8px] font-bold text-indigo-400/80 uppercase tracking-tighter">Sync Active</span>
+              <span className="text-[14px] font-black tracking-widest text-white">AEON_SCROLL</span>
+              <span className="text-[9px] font-bold text-indigo-600/80 uppercase tracking-tighter">Sync Active</span>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsEditMode(!isEditMode)}
-              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isEditMode ? 'bg-indigo-600 border-indigo-400' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+              className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${isEditMode ? 'bg-indigo-700 border-indigo-500' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
             >
               {isEditMode ? <Check size={14} /> : <Edit3 size={14} />}
               <span>{isEditMode ? 'Lock Design' : 'Edit Script'}</span>
@@ -129,12 +129,12 @@ const App: React.FC = () => {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full" />
       </div>
 
-      <header className="fixed top-12 left-12 z-50 flex items-center gap-6 animate-in fade-in slide-in-from-left-10 duration-1000">
-        <InfinityLogo size={28} className="text-indigo-500 drop-shadow-[0_0_15px_rgba(99,102,241,0.2)]" />
-        <div className="w-[1px] h-8 bg-white/10" />
+      <header className="fixed top-12 left-12 z-50 flex items-center gap-8 animate-in fade-in slide-in-from-left-10 duration-1000">
+        <InfinityLogo size={48} className="text-indigo-700 drop-shadow-[0_0_15px_rgba(67,56,202,0.15)]" />
+        <div className="w-[1px] h-12 bg-white/10" />
         <div className="flex flex-col">
-          <span className="text-[12px] font-black tracking-[1em] uppercase text-white">Aeon</span>
-          <span className="text-[7px] font-black tracking-[0.5em] text-white/20 uppercase mt-1">Infinity Engine</span>
+          <span className="text-[16px] font-black tracking-[1em] uppercase text-white leading-none">Aeon</span>
+          <span className="text-[9px] font-black tracking-[0.5em] text-white/30 uppercase mt-2">Infinity Engine</span>
         </div>
       </header>
 

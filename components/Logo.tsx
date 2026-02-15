@@ -19,7 +19,7 @@ const InfinityLogo: React.FC<LogoProps> = ({ className = "", size = 40 }) => {
       <defs>
         <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="currentColor" stopOpacity="1" />
-          <stop offset="100%" stopColor="currentColor" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="1" />
         </linearGradient>
       </defs>
       <path 
