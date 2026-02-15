@@ -10,11 +10,11 @@ const InfinityLogo: React.FC<LogoProps> = ({ className = "", size = 40 }) => {
   return (
     <svg 
       width={size} 
-      height={(size * 400) / 320} 
       viewBox="0 0 320 400" 
       fill="none" 
       xmlns="http://www.w3.org/2000/svg"
-      className={className}
+      className={`${className} h-auto`}
+      style={{ minWidth: size }}
     >
       <defs>
         <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">

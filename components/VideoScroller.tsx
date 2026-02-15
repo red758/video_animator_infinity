@@ -29,11 +29,6 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
     setHasError(false);
     setIsLoaded(false);
 
-    // If already primed by browser cache
-    if (video.readyState >= 2) {
-      setIsLoaded(true);
-    }
-    
     const handleCanPlay = () => {
       setIsLoaded(true);
       video.pause();
@@ -77,7 +72,9 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
         el.style.opacity = opacity.toString();
         el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
         
-        const yOffset = (progress - section.triggerTime) * 150;
+        // Dynamic yOffset scaled for screen size
+        const multiplier = window.innerWidth < 768 ? 60 : 100;
+        const yOffset = (progress - section.triggerTime) * multiplier;
         el.style.transform = `translate3d(0, ${yOffset}px, 0)`;
       });
 
@@ -107,7 +104,6 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
   };
 
   const handleError = () => {
-    console.warn("AEON Engine // Media load failed for source:", videoUrl);
     setHasError(true);
   };
 
@@ -134,17 +130,17 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
               preload="auto"
               onError={handleError}
               className={`w-full h-full object-cover transition-opacity duration-1000 brightness-90 contrast-110 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+              style={{ webkitPlaysInline: true } as any}
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-10">
-              <div className="text-white/10 font-black tracking-widest text-4xl mb-8 uppercase text-center max-w-2xl">MEDIA_LOAD_TERMINATED</div>
-              <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.2em] mb-10 text-center">The browser could not load this asset. This is often due to strict network settings or an unsupported codec.</p>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-6 md:p-10">
+              <div className="text-white/10 font-black tracking-widest text-xl md:text-4xl mb-6 md:mb-8 uppercase text-center max-w-2xl leading-tight">MEDIA_LOAD_TERMINATED</div>
               <button 
                 onClick={handleManualRetry}
-                className="pointer-events-auto flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all"
+                className="pointer-events-auto flex items-center gap-3 px-6 md:px-8 py-3.5 md:py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all"
               >
                 <RefreshCw size={18} className="text-indigo-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Retry System Load</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">Retry System</span>
               </button>
             </div>
           )}
@@ -152,33 +148,33 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
           {!isLoaded && !hasError && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                <div className="flex flex-col items-center gap-6">
-                 <div className="w-12 h-12 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                 <span className="text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Priming Assets</span>
+                 <div className="w-10 h-10 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+                 <span className="text-[8px] md:text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Priming Assets</span>
                </div>
             </div>
           )}
         </div>
 
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
           {sections.map((section, idx) => (
             <div
               key={idx}
               ref={(el) => { sectionRefs.current[idx] = el; }}
-              className="absolute w-full px-10 md:px-20"
+              className="absolute w-full px-6 md:px-20"
               style={{ opacity: 0, visibility: 'hidden', textAlign: section.alignment as any }}
             >
               {isEditMode ? (
-                <div className="pointer-events-auto max-w-4xl mx-auto">
+                <div className="pointer-events-auto max-w-4xl mx-auto px-4">
                   <input 
-                    className="bg-zinc-900/90 border-2 border-indigo-500/50 p-6 rounded-2xl outline-none text-3xl md:text-7xl font-black tracking-tighter text-white w-full text-center shadow-2xl"
+                    className="bg-zinc-900/95 border-2 border-indigo-500/50 p-4 md:p-6 rounded-xl md:rounded-2xl outline-none text-xl sm:text-3xl md:text-7xl font-black tracking-tighter text-white w-full text-center shadow-2xl"
                     value={section.title}
                     onChange={(e) => onUpdateSection?.(idx, { ...section, title: e.target.value })}
                   />
-                  <p className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.5em] mt-4">Narrative Block {idx + 1}</p>
+                  <p className="text-indigo-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.5em] mt-3 md:mt-4">Narrative Block {idx + 1}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <h2 className="text-6xl md:text-[14rem] font-black tracking-tighter text-white/20 leading-none select-none uppercase drop-shadow-2xl">
+                  <h2 className="text-4xl sm:text-6xl md:text-[14rem] font-black tracking-tighter text-white/20 leading-none select-none uppercase drop-shadow-2xl">
                     {section.title}
                   </h2>
                 </div>
@@ -190,22 +186,22 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
 
       <div className="relative z-20">
         <section className="min-h-screen flex items-center justify-center px-6">
-          <div className="text-center max-w-4xl bg-black/60 p-12 rounded-[3rem] border border-white/10 backdrop-blur-xl">
-            <h1 className="text-6xl md:text-[10rem] font-black tracking-tighter text-white mb-6 leading-none">
+          <div className="text-center max-w-4xl bg-black/60 p-10 md:p-12 rounded-[2rem] md:rounded-[3rem] border border-white/10 backdrop-blur-xl">
+            <h1 className="text-5xl sm:text-7xl md:text-[10rem] font-black tracking-tighter text-white mb-4 md:mb-6 leading-[0.9]">
               AEON<br/>SCROLL
             </h1>
-            <p className="text-indigo-400 text-[11px] font-black tracking-[0.8em] uppercase">
-              Begin Scrolling to Explore
+            <p className="text-indigo-400 text-[9px] md:text-[11px] font-black tracking-[0.4em] md:tracking-[0.8em] uppercase">
+              Scroll To Architect
             </p>
           </div>
         </section>
 
-        <section className="min-h-screen flex items-center justify-center p-10">
-          <div className="bg-zinc-900/90 backdrop-blur-3xl border border-white/20 p-16 rounded-[4rem] max-w-3xl pointer-events-auto text-center shadow-[0_0_80px_rgba(0,0,0,0.5)]">
-             <h3 className="text-5xl font-black text-white mb-6 uppercase tracking-tight">PRECISION SYNC.</h3>
-             <p className="text-white/60 text-base leading-relaxed font-medium">
+        <section className="min-h-screen flex items-center justify-center p-6 md:p-10">
+          <div className="bg-zinc-900/90 backdrop-blur-3xl border border-white/20 p-8 md:p-16 rounded-[2.5rem] md:rounded-[4rem] max-w-3xl pointer-events-auto text-center shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+             <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 uppercase tracking-tight leading-tight">PRECISION SYNC.</h3>
+             <p className="text-white/60 text-[13px] md:text-base leading-relaxed font-medium">
                The engine maps every scroll unit to a specific video frame. 
-               The video in the background responds directly to your scrolling speed.
+               The narrative responds directly to your manual rhythm.
              </p>
           </div>
         </section>
