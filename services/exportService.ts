@@ -2,17 +2,27 @@
 import { ScrollSection } from "../types";
 
 /**
- * AEON EXPORT ENGINE v7.0 - HIGH-FIDELITY BUILD
- * - Restored full brightness and color.
- * - Fixed "Paused/Jumping" scrub bug.
- * - Precision scroll-to-frame mapping.
+ * AEON EXPORT ENGINE v8.0 - PRODUCTION BUILD
+ * - Enhanced Deployment Validation
  */
 export function generateSnippetCode(sections: ScrollSection[], videoUrl: string, sensitivity: number = 0.15): string {
   const isBlob = videoUrl.startsWith('blob:');
-  const displayUrl = isBlob ? 'PASTE_YOUR_VIDEO_URL_HERE.mp4' : videoUrl;
+  const displayUrl = isBlob ? 'PASTE_YOUR_PUBLIC_VIDEO_URL_HERE.mp4' : videoUrl;
   const sectionsJSON = JSON.stringify(sections, null, 2);
 
-  return `<!-- 
+  const notice = isBlob ? `
+<!-- 
+     ⚠️ ATTENTION: DEPLOYMENT REQUIRED ⚠️
+     THIS CODE IS CURRENTLY USING A LOCAL PREVIEW ASSET.
+     
+     FOR THIS TO WORK ON YOUR LIVE WEBSITE:
+     1. Upload your video file to a public host (e.g., Cloudinary, AWS S3, or your server).
+     2. Locate the variable 'const SRC' in the script below.
+     3. Replace 'PASTE_YOUR_PUBLIC_VIDEO_URL_HERE.mp4' with your actual public link.
+-->` : '';
+
+  return `${notice}
+<!-- 
      AEON BACKGROUND ENGINE (PRO BUILD)
      Instructions: Paste this block at the VERY BOTTOM of your <body> tag.
 -->
@@ -22,7 +32,7 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
-            z-index: -1; /* Pushes to background */
+            z-index: -1;
             overflow: hidden;
             background: #000;
             pointer-events: none;
@@ -32,7 +42,6 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
         #aeon-video-element {
             width: 100%; height: 100%;
             object-fit: cover;
-            /* Full brightness restored. Slight contrast boost for cinematic feel. */
             opacity: 1;
             filter: contrast(1.05) brightness(0.95);
             display: block;
@@ -60,14 +69,14 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
 
         .aeon-ghost-h2 {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            font-size: clamp(3rem, 20vw, 15rem);
+            font-size: clamp(3rem, 15vw, 15rem);
             font-weight: 900;
             text-transform: uppercase;
             line-height: 0.8;
             letter-spacing: -0.05em;
             margin: 0;
-            color: rgba(255, 255, 255, 0.12); /* Subtle ghost text */
-            text-shadow: 0 10px 50px rgba(0,0,0,0.2);
+            color: rgba(255, 255, 255, 0.15);
+            text-shadow: 0 10px 50px rgba(0,0,0,0.3);
         }
 
         #aeon-loader-ui {
@@ -84,9 +93,17 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
 
     <script>
         (function() {
+            // --- CONFIGURATION ---
             const SRC = "${displayUrl}";
             const DATA = ${sectionsJSON};
             const LERP_FACTOR = ${sensitivity};
+
+            // --- VALIDATION CHECK ---
+            if (SRC === "PASTE_YOUR_PUBLIC_VIDEO_URL_HERE.mp4") {
+                const msg = "AEON_ERROR: No public video URL provided. You must replace the placeholder URL in the code snippet to view the narrative.";
+                console.error(msg);
+                alert(msg);
+            }
 
             const video = document.getElementById('aeon-video-element');
             const stage = document.getElementById('aeon-ghost-stage');
@@ -95,7 +112,6 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
             video.src = SRC;
             video.pause();
 
-            // Build narrative segments
             DATA.forEach((s, i) => {
                 const div = document.createElement('div');
                 div.className = 'aeon-ghost-text';
@@ -110,21 +126,18 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
             let isSeeking = false;
 
             function sync() {
-                // Apply LERP for buttery smooth motion
                 currentProgress += (targetProgress - currentProgress) * LERP_FACTOR;
                 
                 if (video.duration && !isSeeking) {
                     const safeDur = video.duration - 0.1;
                     const seekTime = safeDur * currentProgress;
                     
-                    // Only update if difference is noticeable (> 1/60th of a sec)
                     if (Math.abs(video.currentTime - seekTime) > 0.01) {
                         isSeeking = true;
                         video.currentTime = seekTime;
                     }
                 }
 
-                // Update Narrative Opacity
                 DATA.forEach((s, i) => {
                     const el = document.getElementById('aeon-ghost-' + i);
                     if (!el) return;
@@ -139,15 +152,12 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
                 requestAnimationFrame(sync);
             }
 
-            // High-precision scroll mapping
             const updateScroll = () => {
                 const scrollable = document.documentElement.scrollHeight - window.innerHeight;
                 targetProgress = scrollable > 0 ? window.scrollY / scrollable : 0;
             };
 
-            // Prevent video seek-locking (the "pausing" bug)
             video.addEventListener('seeked', () => { isSeeking = false; });
-
             window.addEventListener('scroll', updateScroll, { passive: true });
             window.addEventListener('resize', updateScroll);
 
@@ -158,7 +168,6 @@ export function generateSnippetCode(sections: ScrollSection[], videoUrl: string,
                 sync();
             };
             
-            // Fallback for cached videos
             if (video.readyState >= 2) video.onloadedmetadata();
         })();
     </script>

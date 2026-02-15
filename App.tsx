@@ -8,6 +8,31 @@ import { generateVideoStory } from './services/geminiService';
 import { generateSnippetCode } from './services/exportService';
 import { VideoState, ScrollSection } from './types';
 
+// Pre-defined narratives for samples so they work without an API key
+const SAMPLE_DATA: Record<string, ScrollSection[]> = {
+  '1': [
+    { title: "THE DREAM", description: "A voyage through the mechanical subconscious.", triggerTime: 0.15, alignment: 'center', vibe: 'cinematic' },
+    { title: "SYNCHRONY", description: "Parts moving in a beautiful, unintended dance.", triggerTime: 0.35, alignment: 'left', vibe: 'cinematic' },
+    { title: "NIGHTFALL", description: "Shadows defining the edges of the digital void.", triggerTime: 0.55, alignment: 'right', vibe: 'cinematic' },
+    { title: "SYSTEMS", description: "Every gear turning with absolute purpose.", triggerTime: 0.75, alignment: 'center', vibe: 'cinematic' },
+    { title: "INFINITY", description: "The loop continues beyond the frame.", triggerTime: 0.90, alignment: 'center', vibe: 'cinematic' }
+  ],
+  '2': [
+    { title: "NATURES PACE", description: "Finding silence in the heart of the forest.", triggerTime: 0.15, alignment: 'left', vibe: 'minimal' },
+    { title: "WILDERNESS", description: "Vast landscapes reclaimed by time itself.", triggerTime: 0.35, alignment: 'center', vibe: 'minimal' },
+    { title: "RHYTHM", description: "The organic pulse of a world reborn.", triggerTime: 0.55, alignment: 'right', vibe: 'minimal' },
+    { title: "LIGHTBEAMS", description: "Clarity cutting through the ancient leaves.", triggerTime: 0.75, alignment: 'left', vibe: 'minimal' },
+    { title: "LEGACY", description: "What remains after the noise fades away.", triggerTime: 0.90, alignment: 'center', vibe: 'minimal' }
+  ],
+  '3': [
+    { title: "CINEMATIC", description: "Every frame captured for maximum impact.", triggerTime: 0.15, alignment: 'center', vibe: 'energetic' },
+    { title: "THE ESCAPE", description: "Breaking free from the static of the grid.", triggerTime: 0.35, alignment: 'right', vibe: 'energetic' },
+    { title: "VELOCITY", description: "Momentum moving at the speed of thought.", triggerTime: 0.55, alignment: 'left', vibe: 'energetic' },
+    { title: "DYNAMICS", description: "The intersection of art and digital power.", triggerTime: 0.75, alignment: 'center', vibe: 'energetic' },
+    { title: "FUTURE", description: "Architecting what comes next.", triggerTime: 0.90, alignment: 'center', vibe: 'energetic' }
+  ]
+};
+
 const App: React.FC = () => {
   const [state, setState] = useState<VideoState>({
     url: null,
@@ -27,15 +52,31 @@ const App: React.FC = () => {
     document.body.style.overflow = (showExportModal || state.isAnalyzing) ? 'hidden' : 'unset';
   }, [showExportModal, state.isAnalyzing]);
 
-  const handleVideoInit = async (url: string, sourceName: string) => {
+  const handleVideoInit = async (url: string, sourceName: string, sampleId?: string) => {
+    const localData = sampleId ? SAMPLE_DATA[sampleId] : null;
+
+    if (localData) {
+      setState(prev => ({ 
+        ...prev, 
+        url, 
+        sections: localData, 
+        isAnalyzing: false 
+      }));
+      return;
+    }
+
     setState(prev => ({ ...prev, url, isAnalyzing: true }));
     setError(null);
     try {
       const storySections = await generateVideoStory(`Source: ${sourceName}`, state.brandName);
       setState(prev => ({ ...prev, sections: storySections, isAnalyzing: false }));
     } catch (err: any) {
-      setError(`SYSTEM_FAULT: ${err.message}`);
-      setState(prev => ({ ...prev, isAnalyzing: false }));
+      const fallbackSections: ScrollSection[] = [
+        { title: "RAW INPUT", description: "Direct link established. Manual override active.", triggerTime: 0.20, alignment: 'center', vibe: 'cinematic' },
+        { title: "DATA STREAM", description: "Architect your narrative using the editor.", triggerTime: 0.80, alignment: 'center', vibe: 'cinematic' }
+      ];
+      setState(prev => ({ ...prev, sections: fallbackSections, isAnalyzing: false }));
+      setError(`Gemini Key Missing: Local Fallback Active`);
     }
   };
 
@@ -123,7 +164,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#050505] text-white relative flex flex-col items-center justify-center p-6 overflow-hidden">
-      {/* Dynamic Background Effects */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full" />
@@ -159,7 +199,7 @@ const App: React.FC = () => {
           <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
           <FileUpload 
             onFileSelect={(file) => handleVideoInit(URL.createObjectURL(file), file.name)} 
-            onSampleSelect={(url, name) => handleVideoInit(url, name)}
+            onSampleSelect={(url, name, id) => handleVideoInit(url, name, id)}
             isAnalyzing={state.isAnalyzing} 
           />
         </div>
@@ -170,8 +210,8 @@ const App: React.FC = () => {
         </div>
 
         {error && (
-          <div className="fixed bottom-8 px-6 py-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-4 backdrop-blur-2xl">
-            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <div className="fixed bottom-8 px-6 py-3 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-4 backdrop-blur-2xl">
+            <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
             {error}
             <button onClick={() => setError(null)} className="hover:text-white transition-colors"><X size={14}/></button>
           </div>
