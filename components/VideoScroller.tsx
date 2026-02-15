@@ -80,10 +80,9 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
   return (
     <div ref={containerRef} className="relative w-full h-[800vh] bg-black">
       
-      {/* 1. BACKGROUND ENGINE LAYER (RE-SYNCHRONIZED) */}
+      {/* 1. BACKGROUND ENGINE LAYER */}
       <div className="sticky top-0 left-0 w-full h-screen overflow-hidden z-0 pointer-events-none">
         
-        {/* VIDEO SCRUBBER - HIGH FIDELITY */}
         <div className="absolute inset-0 z-0">
           {!hasError ? (
             <video
@@ -94,60 +93,63 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpd
               muted
               preload="auto"
               onError={() => setHasError(true)}
-              className="w-full h-full object-cover filter contrast-[1.05] brightness-90"
+              className="w-full h-full object-cover brightness-75 contrast-125"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/5 font-black uppercase tracking-[1em]">IO_STREAM_FAULT</div>
+            <div className="w-full h-full flex items-center justify-center text-white/10 font-black tracking-widest">VIDEO_STREAM_ERROR</div>
           )}
         </div>
 
-        {/* GHOST TEXT LAYER */}
+        {/* GHOST TEXT LAYER - NOW MORE VISIBLE */}
         <div className="absolute inset-0 z-10 flex items-center justify-center">
           {sections.map((section, idx) => (
             <div
               key={idx}
               ref={(el) => { sectionRefs.current[idx] = el; }}
-              className="absolute w-full px-20"
+              className="absolute w-full px-10 md:px-20"
               style={{ opacity: 0, visibility: 'hidden', textAlign: section.alignment as any }}
             >
               {isEditMode ? (
                 <div className="pointer-events-auto max-w-4xl mx-auto">
                   <input 
-                    className="bg-black/40 border border-white/10 px-6 py-4 rounded-xl outline-none text-4xl md:text-8xl font-black tracking-tighter text-white w-full focus:border-indigo-500 transition-all text-center backdrop-blur-xl shadow-2xl"
+                    className="bg-zinc-900/90 border-2 border-indigo-500/50 p-6 rounded-2xl outline-none text-3xl md:text-7xl font-black tracking-tighter text-white w-full text-center shadow-2xl"
                     value={section.title}
                     onChange={(e) => onUpdateSection?.(idx, { ...section, title: e.target.value })}
                   />
+                  <p className="text-indigo-400 text-[10px] font-black uppercase tracking-[0.5em] mt-4">Narrative Block {idx + 1}</p>
                 </div>
               ) : (
-                <h2 className="text-7xl md:text-[18rem] font-black tracking-tighter text-white/[0.1] leading-none select-none uppercase drop-shadow-2xl">
-                  {section.title}
-                </h2>
+                <div className="space-y-2">
+                  <h2 className="text-6xl md:text-[14rem] font-black tracking-tighter text-white/20 leading-none select-none uppercase drop-shadow-2xl">
+                    {section.title}
+                  </h2>
+                </div>
               )}
             </div>
           ))}
         </div>
       </div>
 
-      {/* 2. FOREGROUND LAYER (PREVIEW) */}
+      {/* 2. FOREGROUND CONTENT LAYER */}
       <div className="relative z-20">
-        <section className="min-h-screen flex items-center justify-center px-10">
-          <div className="text-center max-w-6xl">
-            <h1 className="text-8xl md:text-[14rem] font-black tracking-tighter text-white mb-8 drop-shadow-2xl leading-[0.75]">
-              VIVID<br/>
-              REALITY
+        <section className="min-h-screen flex items-center justify-center px-6">
+          <div className="text-center max-w-4xl bg-black/40 p-12 rounded-[3rem] border border-white/10 backdrop-blur-xl">
+            <h1 className="text-6xl md:text-[10rem] font-black tracking-tighter text-white mb-6 leading-none">
+              LIVE<br/>PREVIEW
             </h1>
-            <p className="text-white/60 text-[10px] md:text-xs font-black tracking-[1em] uppercase max-w-2xl mx-auto leading-loose bg-black/40 p-5 rounded-full backdrop-blur-3xl border border-white/5">
-              Engine Version 7.0 Active
+            <p className="text-indigo-400 text-[11px] font-black tracking-[0.8em] uppercase">
+              Begin Scrolling to Play
             </p>
           </div>
         </section>
 
-        <section className="min-h-screen flex items-center justify-center p-20">
-          <div className="bg-black/60 backdrop-blur-3xl border border-white/10 p-20 rounded-[5rem] max-w-3xl pointer-events-auto text-center shadow-2xl">
-             <h3 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase leading-none">NO MORE<br/>PAUSING.</h3>
-             <p className="text-white/40 text-sm leading-relaxed font-bold tracking-[0.2em] uppercase">
-               The seek logic is now throttled and optimized for browser playback buffers. 
-               The video follows your scroll with zero stutter.
+        <section className="min-h-screen flex items-center justify-center p-10">
+          <div className="bg-zinc-900/90 backdrop-blur-3xl border border-white/20 p-16 rounded-[4rem] max-w-3xl pointer-events-auto text-center shadow-[0_0_80px_rgba(0,0,0,0.5)]">
+             <h3 className="text-5xl font-black text-white mb-6 uppercase tracking-tight">PRECISION SYNC.</h3>
+             <p className="text-white/60 text-base leading-relaxed font-medium">
+               The engine maps every scroll unit to a specific video frame. 
+               This section is fully opaque to ensure your content is the main focus 
+               while the cinematic background creates the atmosphere.
              </p>
           </div>
         </section>

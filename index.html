@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;900&display=swap" rel="stylesheet">
     <script>
-      // Global shim for process.env to prevent crashes in static browser environments
       window.process = window.process || { env: {} };
     </script>
     <style>
@@ -24,7 +23,29 @@
         #root {
             width: 100%;
             height: 100%;
+            position: relative;
         }
+
+        /* Animated Background Orbs */
+        .bg-orb {
+            position: fixed;
+            width: 60vw;
+            height: 60vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
+            animation: orbFloat 20s infinite alternate ease-in-out;
+        }
+        .orb-1 { background: radial-gradient(circle, #4f46e5 0%, transparent 70%); top: -10%; left: -10%; }
+        .orb-2 { background: radial-gradient(circle, #818cf8 0%, transparent 70%); bottom: -10%; right: -10%; animation-delay: -5s; }
+
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(5%, 10%) scale(1.1); }
+        }
+
         #root:empty {
             background: #000;
             height: 100vh;
@@ -36,33 +57,32 @@
         }
         #root:empty::before {
             content: "";
-            width: 40px;
-            height: 40px;
-            border: 2px solid rgba(79, 70, 229, 0.2);
-            border-top: 2px solid #4f46e5;
+            width: 50px;
+            height: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 2px solid #6366f1;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 1s cubic-bezier(0.7, 0, 0.3, 1) infinite;
         }
         #root:empty::after {
-            content: "AEON // INITIALIZING SYSTEM";
-            font-size: 14px;
-            letter-spacing: 0.6em;
+            content: "AEON_CORE_INITIALIZING";
+            font-size: 10px;
+            letter-spacing: 0.8em;
             color: #ffffff;
             font-weight: 900;
             text-transform: uppercase;
-            animation: pulse 2s ease-in-out infinite;
+            opacity: 0.5;
         }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-        ::-webkit-scrollbar { width: 6px; }
+
+        ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: #000; }
-        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
     </style>
 <script type="importmap">
 {
@@ -79,6 +99,8 @@
 </script>
 </head>
 <body>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
 </body>
