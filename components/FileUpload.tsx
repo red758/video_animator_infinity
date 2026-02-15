@@ -12,21 +12,21 @@ const SAMPLES = [
   { 
     id: '1', 
     name: 'DEEP SPACE', 
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-stars-in-the-deep-space-1156-large.mp4', 
+    url: 'https://res.cloudinary.com/dyd911kmh/video/upload/v1640051171/video_samples/space_oej7uj.mp4', 
     icon: <Rocket size={24}/>,
     tag: 'SCI-FI'
   },
   { 
     id: '2', 
     name: 'MOUNTAIN', 
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-going-down-a-curved-highway-down-a-mountain-41545-large.mp4', 
+    url: 'https://res.cloudinary.com/dyd911kmh/video/upload/v1640051171/video_samples/mountains_v8z8z3.mp4', 
     icon: <Mountain size={24}/>,
     tag: 'NATURE'
   },
   { 
     id: '3', 
     name: 'CITY NIGHT', 
-    url: 'https://assets.mixkit.co/videos/preview/mixkit-night-city-street-lights-and-traffic-1161-large.mp4', 
+    url: 'https://res.cloudinary.com/dyd911kmh/video/upload/v1640051171/video_samples/city_night_j6p1e7.mp4', 
     icon: <Building size={24}/>,
     tag: 'URBAN'
   },
@@ -40,7 +40,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, onSampleSelect, i
 
   if (isAnalyzing) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-10">
+      <div className="flex flex-col items-center justify-center py-24 gap-10">
         <div className="relative">
           <div className="w-32 h-32 border-4 border-indigo-500/20 rounded-full animate-spin border-t-indigo-500" />
           <div className="absolute inset-0 flex items-center justify-center">
@@ -86,18 +86,26 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, onSampleSelect, i
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
-      <label className="block w-full cursor-pointer group">
-        <input type="file" className="hidden" accept="video/*" onChange={handleFile} />
-        <div className="bg-zinc-950 border-2 border-dashed border-white/10 p-12 rounded-[2.5rem] group-hover:bg-zinc-900 group-hover:border-indigo-500/50 transition-all flex flex-col items-center gap-6 text-center">
-          <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center text-white/30 group-hover:text-indigo-400 group-hover:scale-110 transition-all">
-            <Film size={32} />
+      <div className="relative w-full group">
+        <input 
+          type="file" 
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20" 
+          accept="video/*" 
+          onChange={handleFile} 
+        />
+        <div className="bg-zinc-950 border-2 border-dashed border-white/10 p-16 md:p-24 rounded-[2.5rem] group-hover:bg-zinc-900 group-hover:border-indigo-500/50 transition-all flex flex-col items-center gap-8 text-center pointer-events-none relative z-10">
+          <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center text-white/30 group-hover:text-indigo-400 group-hover:scale-110 transition-all duration-500">
+            <Film size={40} />
           </div>
-          <div className="space-y-2">
-            <h2 className="text-lg font-black uppercase tracking-tight text-white">Select Video Asset</h2>
-            <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">MP4, WEBM, or MOV up to 100MB</p>
+          <div className="space-y-3">
+            <h2 className="text-2xl font-black uppercase tracking-tight text-white">Select Video Asset</h2>
+            <p className="text-white/40 text-[11px] font-bold uppercase tracking-[0.2em]">Click anywhere in this box to import MP4, WEBM, or MOV</p>
+          </div>
+          <div className="mt-4 px-6 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-indigo-400 text-[10px] font-black uppercase tracking-widest">
+            Maximum Capacity: 100MB
           </div>
         </div>
-      </label>
+      </div>
     </div>
   );
 };
