@@ -1,214 +1,176 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { ScrollSection } from '../types';
-import { RefreshCw } from 'lucide-react';
 
 interface VideoScrollerProps {
   videoUrl: string;
   sections: ScrollSection[];
   onUpdateSection?: (index: number, section: ScrollSection) => void;
   isEditMode?: boolean;
+  layoutMode?: 'section' | 'background';
+  scrollDepth: number;
+  sensitivity: number;
 }
 
-const VideoScroller: React.FC<VideoScrollerProps> = ({ videoUrl, sections, onUpdateSection, isEditMode }) => {
+const VideoScroller: React.FC<VideoScrollerProps> = ({ 
+  videoUrl, 
+  sections, 
+  onUpdateSection, 
+  isEditMode,
+  layoutMode = 'section',
+  scrollDepth,
+  sensitivity
+}) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
-  
-  const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
+  
   const targetProgress = useRef(0);
   const currentProgress = useRef(0);
-  const isSeeking = useRef(false);
+  const lastTimeRef = useRef(-1);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
-    setHasError(false);
-    setIsLoaded(false);
-
-    const handleCanPlay = () => {
-      setIsLoaded(true);
-      video.pause();
-      video.currentTime = 0;
-    };
-
-    video.addEventListener('canplay', handleCanPlay, { once: true });
-    video.load();
     
-    return () => {
-      video.removeEventListener('canplay', handleCanPlay);
+    setIsLoaded(false);
+    video.src = videoUrl;
+    video.load();
+
+    const handleLoaded = () => {
+      setIsLoaded(true);
+      video.currentTime = 0.01; 
     };
-  }, [videoUrl, retryCount]);
+
+    video.addEventListener('loadedmetadata', handleLoaded);
+    return () => video.removeEventListener('loadedmetadata', handleLoaded);
+  }, [videoUrl]);
 
   useEffect(() => {
-    const animate = () => {
-      const lerp = 0.1; 
-      currentProgress.current += (targetProgress.current - currentProgress.current) * lerp;
-      
-      const progress = currentProgress.current;
-      const video = videoRef.current;
-
-      if (video && video.readyState >= 2 && video.duration && !isNaN(video.duration) && !isSeeking.current) {
-        const safeDuration = video.duration - 0.1;
-        const targetTime = safeDuration * progress;
-        
-        if (Math.abs(video.currentTime - targetTime) > 0.02) {
-          isSeeking.current = true;
-          video.currentTime = targetTime;
-        }
-      }
-
-      sections.forEach((section, idx) => {
-        const el = sectionRefs.current[idx];
-        if (!el) return;
-
-        const distance = Math.abs(progress - section.triggerTime);
-        const windowSize = 0.12; 
-        const opacity = Math.max(0, 1 - (distance / windowSize));
-        
-        el.style.opacity = opacity.toString();
-        el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
-        
-        // Dynamic yOffset scaled for screen size
-        const multiplier = window.innerWidth < 768 ? 60 : 100;
-        const yOffset = (progress - section.triggerTime) * multiplier;
-        el.style.transform = `translate3d(0, ${yOffset}px, 0)`;
-      });
-
-      requestAnimationFrame(animate);
-    };
+    let rafId: number;
 
     const handleScroll = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const totalScrollable = containerRef.current.offsetHeight - window.innerHeight;
-      if (totalScrollable > 0) {
-        targetProgress.current = Math.max(0, Math.min(1, -rect.top / totalScrollable));
+      const totalScrollableHeight = containerRef.current.offsetHeight - window.innerHeight;
+      
+      if (totalScrollableHeight > 0) {
+        // Calculate progress based on relative position to viewport
+        const rawProgress = -rect.top / totalScrollableHeight;
+        targetProgress.current = Math.max(0, Math.min(1, rawProgress));
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    const rafid = requestAnimationFrame(animate);
+    const animate = () => {
+      // Smooth LERP movement
+      currentProgress.current += (targetProgress.current - currentProgress.current) * sensitivity;
+      const progress = currentProgress.current;
 
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      cancelAnimationFrame(rafid);
+      const video = videoRef.current;
+      // LAG-FREE SCRUBBING: Check video state before requesting new frame
+      if (video && isLoaded && video.duration > 0 && !video.seeking) {
+        const targetTime = (video.duration - 0.1) * progress;
+        // Only seek if change is significant enough to prevent microscopic micro-lag
+        if (Math.abs(video.currentTime - targetTime) > 0.04) {
+          video.currentTime = targetTime;
+        }
+      }
+
+      // Animate the Text Overlays
+      sections.forEach((section, idx) => {
+        const el = sectionRefs.current[idx];
+        if (!el) return;
+        
+        const distance = Math.abs(progress - section.triggerTime);
+        const opacity = Math.max(0, 1 - (distance / 0.15));
+        
+        el.style.opacity = opacity.toString();
+        el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
+        const yOffset = (progress - section.triggerTime) * -120;
+        el.style.transform = `translate3d(0, ${yOffset}px, 0)`;
+      });
+
+      rafId = requestAnimationFrame(animate);
     };
-  }, [sections]);
 
-  const handleSeeked = () => {
-    isSeeking.current = false;
-  };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    rafId = requestAnimationFrame(animate);
+    handleScroll();
 
-  const handleError = () => {
-    setHasError(true);
-  };
+    return () => { 
+      window.removeEventListener('scroll', handleScroll); 
+      cancelAnimationFrame(rafId); 
+    };
+  }, [sections, isLoaded, layoutMode, scrollDepth, sensitivity]);
 
-  const handleManualRetry = () => {
-    setHasError(false);
-    setIsLoaded(false);
-    setRetryCount(prev => prev + 1);
-  };
+  // Height defines the scrolling distance
+  const containerStyles = { height: `${scrollDepth * 100}vh` };
+
+  // Fixed for background, Sticky for section
+  const stageClass = layoutMode === 'background' 
+    ? "fixed inset-0 w-full h-full z-0"
+    : "sticky top-0 left-0 w-full h-screen z-0";
 
   return (
-    <div ref={containerRef} className="relative w-full h-[800vh] bg-black">
-      
-      <div className="sticky top-0 left-0 w-full h-screen overflow-hidden z-0 pointer-events-none">
+    <div 
+      ref={containerRef} 
+      className={`relative w-full block ${layoutMode === 'section' ? 'my-0' : ''}`} 
+      style={containerStyles}
+    >
+      <div className={`${stageClass} overflow-hidden bg-black`}>
+        <video 
+          ref={videoRef} 
+          playsInline 
+          muted 
+          preload="auto" 
+          className={`w-full h-full object-cover transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`} 
+        />
+        <div className="absolute inset-0 bg-black/40 pointer-events-none z-[5]" />
         
-        <div className="absolute inset-0 z-0 bg-black">
-          {!hasError ? (
-            <video
-              key={`${videoUrl}-${retryCount}`} 
-              ref={videoRef}
-              src={videoUrl}
-              onSeeked={handleSeeked}
-              playsInline
-              muted
-              preload="auto"
-              onError={handleError}
-              className={`w-full h-full object-cover transition-opacity duration-1000 brightness-90 contrast-110 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-              style={{ webkitPlaysInline: true } as any}
-            />
-          ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 p-6 md:p-10">
-              <div className="text-white/10 font-black tracking-widest text-xl md:text-4xl mb-6 md:mb-8 uppercase text-center max-w-2xl leading-tight">MEDIA_LOAD_TERMINATED</div>
-              <button 
-                onClick={handleManualRetry}
-                className="pointer-events-auto flex items-center gap-3 px-6 md:px-8 py-3.5 md:py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all"
-              >
-                <RefreshCw size={18} className="text-indigo-400" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Retry System</span>
-              </button>
-            </div>
-          )}
-          
-          {!isLoaded && !hasError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-               <div className="flex flex-col items-center gap-6">
-                 <div className="w-10 h-10 border-2 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
-                 <span className="text-[8px] md:text-[10px] font-black text-white/40 tracking-[0.5em] uppercase">Priming Assets</span>
-               </div>
-            </div>
-          )}
-        </div>
-
-        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+        {/* Narrative Nodes Overlay */}
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none px-6">
           {sections.map((section, idx) => (
-            <div
-              key={idx}
-              ref={(el) => { sectionRefs.current[idx] = el; }}
-              className="absolute w-full px-6 md:px-20"
+            <div 
+              key={idx} 
+              ref={(el) => { sectionRefs.current[idx] = el; }} 
+              className="absolute w-full max-w-7xl mx-auto" 
               style={{ opacity: 0, visibility: 'hidden', textAlign: section.alignment as any }}
             >
-              {isEditMode ? (
-                <div className="pointer-events-auto max-w-4xl mx-auto px-4">
-                  <input 
-                    className="bg-zinc-900/95 border-2 border-indigo-500/50 p-4 md:p-6 rounded-xl md:rounded-2xl outline-none text-xl sm:text-3xl md:text-7xl font-black tracking-tighter text-white w-full text-center shadow-2xl"
-                    value={section.title}
-                    onChange={(e) => onUpdateSection?.(idx, { ...section, title: e.target.value })}
-                  />
-                  <p className="text-indigo-400 text-[8px] md:text-[10px] font-black uppercase tracking-[0.5em] mt-3 md:mt-4">Narrative Block {idx + 1}</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <h2 className="text-4xl sm:text-6xl md:text-[14rem] font-black tracking-tighter text-white/20 leading-none select-none uppercase drop-shadow-2xl">
-                    {section.title}
-                  </h2>
-                </div>
-              )}
+              <div className={`${isEditMode ? 'pointer-events-auto' : ''}`}>
+                <h2 className="text-5xl md:text-[9vw] font-black text-white leading-[0.8] uppercase tracking-tighter drop-shadow-2xl">
+                  {isEditMode ? (
+                    <input 
+                      className="bg-black/40 border-b-2 border-indigo-500 outline-none w-full text-center px-4 py-2 rounded-t-xl"
+                      value={section.title}
+                      onChange={(e) => onUpdateSection?.(idx, { ...section, title: e.target.value })}
+                    />
+                  ) : section.title}
+                </h2>
+                <p className="mt-8 text-white/50 text-xs md:text-2xl font-black tracking-[0.4em] uppercase max-w-5xl mx-auto leading-relaxed drop-shadow-xl">
+                  {section.description}
+                </p>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="relative z-20">
-        <section className="min-h-screen flex items-center justify-center px-6">
-          <div className="text-center max-w-4xl bg-black/60 p-10 md:p-12 rounded-[2rem] md:rounded-[3rem] border border-white/10 backdrop-blur-xl">
-            <h1 className="text-5xl sm:text-7xl md:text-[10rem] font-black tracking-tighter text-white mb-4 md:mb-6 leading-[0.9]">
-              AEON<br/>SCROLL
-            </h1>
-            <p className="text-indigo-400 text-[9px] md:text-[11px] font-black tracking-[0.4em] md:tracking-[0.8em] uppercase">
-              Scroll To Architect
-            </p>
+      {/* Global Background Mode Content Simulation */}
+      {layoutMode === 'background' && !isEditMode && (
+        <div className="relative z-20 pointer-events-none pt-[120vh]">
+          <div className="max-w-4xl mx-auto px-10 space-y-[100vh] pb-[100vh]">
+            <div className="space-y-6 opacity-30 text-white">
+               <div className="h-1 w-20 bg-indigo-500"></div>
+               <h3 className="text-5xl font-black uppercase tracking-tighter">Your Dynamic Content</h3>
+               <p className="text-xl font-medium leading-relaxed">In "Global Mode", the video remains fixed as the site backdrop. Your existing sections, text, and imagery glide over it with professional depth.</p>
+            </div>
+            <div className="space-y-6 opacity-30 text-right text-white">
+               <h3 className="text-5xl font-black uppercase tracking-tighter">Parallax Subconscious</h3>
+               <p className="text-xl font-medium leading-relaxed">The Aeon engine manages the sync state while your brand story unfolds at the center of the user's attention.</p>
+            </div>
           </div>
-        </section>
-
-        <section className="min-h-screen flex items-center justify-center p-6 md:p-10">
-          <div className="bg-zinc-900/90 backdrop-blur-3xl border border-white/20 p-8 md:p-16 rounded-[2.5rem] md:rounded-[4rem] max-w-3xl pointer-events-auto text-center shadow-[0_0_80px_rgba(0,0,0,0.5)]">
-             <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-4 md:mb-6 uppercase tracking-tight leading-tight">PRECISION SYNC.</h3>
-             <p className="text-white/60 text-[13px] md:text-base leading-relaxed font-medium">
-               The engine maps every scroll unit to a specific video frame. 
-               The narrative responds directly to your manual rhythm.
-             </p>
-          </div>
-        </section>
-
-        <div className="h-[400vh]" />
-      </div>
-
+        </div>
+      )}
     </div>
   );
 };
