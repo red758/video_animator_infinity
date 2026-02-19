@@ -24,10 +24,10 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [placement, setPlacement] = useState<'top' | 'sticky' | 'bottom'>('top');
   
   const targetProgress = useRef(0);
   const currentProgress = useRef(0);
-  const lastTimeRef = useRef(-1);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -52,31 +52,36 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
     const handleScroll = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
-      const totalScrollableHeight = containerRef.current.offsetHeight - window.innerHeight;
+      const vh = window.innerHeight;
+      const totalScrollableHeight = containerRef.current.offsetHeight - vh;
       
+      // Determine positioning to prevent mobile "slide up"
+      if (rect.top > 0) {
+        setPlacement('top');
+      } else if (rect.bottom < vh) {
+        setPlacement('bottom');
+      } else {
+        setPlacement('sticky');
+      }
+
       if (totalScrollableHeight > 0) {
-        // Calculate progress based on relative position to viewport
         const rawProgress = -rect.top / totalScrollableHeight;
         targetProgress.current = Math.max(0, Math.min(1, rawProgress));
       }
     };
 
     const animate = () => {
-      // Smooth LERP movement
       currentProgress.current += (targetProgress.current - currentProgress.current) * sensitivity;
       const progress = currentProgress.current;
 
       const video = videoRef.current;
-      // LAG-FREE SCRUBBING: Check video state before requesting new frame
       if (video && isLoaded && video.duration > 0 && !video.seeking) {
         const targetTime = (video.duration - 0.1) * progress;
-        // Only seek if change is significant enough to prevent microscopic micro-lag
         if (Math.abs(video.currentTime - targetTime) > 0.04) {
           video.currentTime = targetTime;
         }
       }
 
-      // Animate the Text Overlays
       sections.forEach((section, idx) => {
         const el = sectionRefs.current[idx];
         if (!el) return;
@@ -103,22 +108,39 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
     };
   }, [sections, isLoaded, layoutMode, scrollDepth, sensitivity]);
 
-  // Height defines the scrolling distance
   const containerStyles = { height: `${scrollDepth * 100}vh` };
 
-  // Fixed for background, Sticky for section
-  // Added dvh (dynamic viewport height) support for mobile stability to keep stage pinned
-  const stageClass = layoutMode === 'background' 
-    ? "fixed inset-0 w-full h-full h-[100dvh] z-0"
-    : "sticky top-0 left-0 w-full h-screen h-[100dvh] z-0";
+  // Use fixed positioning during the scroll range to bypass mobile browser sticky bugs
+  let stageStyles: React.CSSProperties = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100dvh',
+    zIndex: 0,
+    overflow: 'hidden',
+    backgroundColor: 'black'
+  };
+
+  if (layoutMode === 'background') {
+    stageStyles.position = 'fixed';
+    stageStyles.inset = 0;
+  } else if (placement === 'sticky') {
+    stageStyles.position = 'fixed';
+    stageStyles.top = 0;
+  } else if (placement === 'bottom') {
+    stageStyles.position = 'absolute';
+    stageStyles.top = 'auto';
+    stageStyles.bottom = 0;
+  }
 
   return (
     <div 
       ref={containerRef} 
-      className={`relative w-full block ${layoutMode === 'section' ? 'my-0' : ''}`} 
+      className="relative w-full block" 
       style={containerStyles}
     >
-      <div className={`${stageClass} overflow-hidden bg-black`}>
+      <div style={stageStyles}>
         <video 
           ref={videoRef} 
           playsInline 
@@ -128,7 +150,6 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
         />
         <div className="absolute inset-0 bg-black/40 pointer-events-none z-[5]" />
         
-        {/* Narrative Nodes Overlay */}
         <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none px-6">
           {sections.map((section, idx) => (
             <div 
@@ -156,7 +177,6 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
         </div>
       </div>
 
-      {/* Global Background Mode Content Simulation */}
       {layoutMode === 'background' && !isEditMode && (
         <div className="relative z-20 pointer-events-none pt-[120vh]">
           <div className="max-w-4xl mx-auto px-10 space-y-[100vh] pb-[100vh]">
