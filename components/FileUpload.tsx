@@ -11,7 +11,7 @@ const SAMPLES = [
   { 
     id: '1', 
     name: 'THE DREAM', 
-    url: 'https://player.cloudinary.com/embed/?cloud_name=dd7o282ls&public_id=deep_space_hgzrwn.mp4', 
+    url: 'https://res.cloudinary.com/dd7o282ls/video/upload/deep_space_hgzrwn.mp4', 
     icon: <Rocket size={32}/>,
     tag: 'SURREAL'
   },
