@@ -107,9 +107,10 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
   const containerStyles = { height: `${scrollDepth * 100}vh` };
 
   // Fixed for background, Sticky for section
+  // Added dvh (dynamic viewport height) support for mobile stability to keep stage pinned
   const stageClass = layoutMode === 'background' 
-    ? "fixed inset-0 w-full h-full z-0"
-    : "sticky top-0 left-0 w-full h-screen z-0";
+    ? "fixed inset-0 w-full h-full h-[100dvh] z-0"
+    : "sticky top-0 left-0 w-full h-screen h-[100dvh] z-0";
 
   return (
     <div 
