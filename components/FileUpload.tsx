@@ -11,7 +11,7 @@ const SAMPLES = [
   { 
     id: '1', 
     name: 'THE DREAM', 
-    url: 'deep_space', 
+    url: 'deep_space.mp4', 
     icon: <Rocket size={32}/>,
     tag: 'SURREAL'
   },
