@@ -11,7 +11,7 @@ const SAMPLES = [
   { 
     id: '1', 
     name: 'THE DREAM', 
-    url: 'deep_space.mp4', 
+    url: 'https://pixabay.com/videos/drop-splash-water-fluid-crown-98064/.mp4', 
     icon: <Rocket size={32}/>,
     tag: 'SURREAL'
   },
