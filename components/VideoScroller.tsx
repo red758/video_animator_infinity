@@ -28,6 +28,7 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
   
   const targetProgress = useRef(0);
   const currentProgress = useRef(0);
+  const isSeeking = useRef(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -42,8 +43,17 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
       video.currentTime = 0.01; 
     };
 
+    const onSeeked = () => {
+      isSeeking.current = false;
+    };
+
     video.addEventListener('loadedmetadata', handleLoaded);
-    return () => video.removeEventListener('loadedmetadata', handleLoaded);
+    video.addEventListener('seeked', onSeeked);
+    
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoaded);
+      video.removeEventListener('seeked', onSeeked);
+    };
   }, [videoUrl]);
 
   useEffect(() => {
@@ -55,7 +65,6 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
       const vh = window.innerHeight;
       const totalScrollableHeight = containerRef.current.offsetHeight - vh;
       
-      // Determine positioning to prevent mobile "slide up"
       if (rect.top > 0) {
         setPlacement('top');
       } else if (rect.bottom < vh) {
@@ -71,17 +80,26 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
     };
 
     const animate = () => {
-      currentProgress.current += (targetProgress.current - currentProgress.current) * sensitivity;
+      // Snappier LERP for immediate feedback
+      const actualSensitivity = isEditMode ? 0.2 : sensitivity;
+      currentProgress.current += (targetProgress.current - currentProgress.current) * actualSensitivity;
       const progress = currentProgress.current;
 
       const video = videoRef.current;
-      if (video && isLoaded && video.duration > 0 && !video.seeking) {
-        const targetTime = (video.duration - 0.1) * progress;
-        if (Math.abs(video.currentTime - targetTime) > 0.04) {
+      
+      // HIGH-PERFORMANCE SCRUBBING ENGINE
+      // Only request a new frame if the decoder is ready (isSeeking is false)
+      // This prevents the "Laggy/Choppy" feel by not overloading the browser's video engine
+      if (video && isLoaded && video.duration > 0 && !isSeeking.current) {
+        const targetTime = (video.duration - 0.05) * progress;
+        // Only seek if change is meaningful (> 1 frame roughly)
+        if (Math.abs(video.currentTime - targetTime) > 0.03) {
+          isSeeking.current = true;
           video.currentTime = targetTime;
         }
       }
 
+      // Animate Narrative Nodes
       sections.forEach((section, idx) => {
         const el = sectionRefs.current[idx];
         if (!el) return;
@@ -91,7 +109,9 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
         
         el.style.opacity = opacity.toString();
         el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
-        const yOffset = (progress - section.triggerTime) * -120;
+        
+        // Use translate3d for hardware acceleration
+        const yOffset = (progress - section.triggerTime) * -150;
         el.style.transform = `translate3d(0, ${yOffset}px, 0)`;
       });
 
@@ -106,11 +126,10 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
       window.removeEventListener('scroll', handleScroll); 
       cancelAnimationFrame(rafId); 
     };
-  }, [sections, isLoaded, layoutMode, scrollDepth, sensitivity]);
+  }, [sections, isLoaded, layoutMode, scrollDepth, sensitivity, isEditMode]);
 
   const containerStyles = { height: `${scrollDepth * 100}vh` };
 
-  // Use fixed positioning during the scroll range to bypass mobile browser sticky bugs
   let stageStyles: React.CSSProperties = {
     position: 'absolute',
     top: 0,
@@ -119,7 +138,8 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
     height: '100dvh',
     zIndex: 0,
     overflow: 'hidden',
-    backgroundColor: 'black'
+    backgroundColor: 'black',
+    willChange: 'transform' // Performance optimization
   };
 
   if (layoutMode === 'background') {
@@ -147,6 +167,7 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
           muted 
           preload="auto" 
           className={`w-full h-full object-cover transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`} 
+          style={{ backfaceVisibility: 'hidden' }}
         />
         <div className="absolute inset-0 bg-black/40 pointer-events-none z-[5]" />
         

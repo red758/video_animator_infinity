@@ -24,7 +24,7 @@ const App: React.FC = () => {
     sections: [],
     isAnalyzing: false,
     brandName: "INFINITY",
-    sensitivity: 0.08,
+    sensitivity: 0.15, // Snappier default for better performance
     scrollDepth: 6,
     startOffset: 0.05,
     endOffset: 0.05,
