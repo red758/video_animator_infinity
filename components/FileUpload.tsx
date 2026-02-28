@@ -10,22 +10,22 @@ interface FileUploadProps {
 const SAMPLES = [
   { 
     id: '1', 
-    name: 'THE DREAM', 
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', 
+    name: 'SPACE', 
+    url: 'https://res.cloudinary.com/dd7o282ls/video/upload/v1771513308/space_jupuge.mp4', 
     icon: <Rocket size={32}/>,
     tag: 'SURREAL'
   },
   { 
     id: '2', 
-    name: 'BIG BUCK', 
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', 
+    name: 'NATURE', 
+    url: 'https://res.cloudinary.com/dd7o282ls/video/upload/v1771511114/nature_ug3pim.mp4', 
     icon: <Mountain size={32}/>,
     tag: 'NATURE'
   },
   { 
     id: '3', 
-    name: 'ESCAPES', 
-    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', 
+    name: 'CITY', 
+    url: 'https://res.cloudinary.com/dd7o282ls/video/upload/v1771511338/city_li0vii.mp4', 
     icon: <Building size={32}/>,
     tag: 'CINEMATIC'
   },
