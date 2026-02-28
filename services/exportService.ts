@@ -54,13 +54,13 @@ export function generateSnippetCode(
      percentage of the total page scroll.
   =============================================================================
 -->
-<div id="${instanceId}-global-bg" style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; background: #000; overflow: hidden; pointer-events: none;">
+<div id="${instanceId}-global-bg" style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; background: transparent; overflow: hidden; pointer-events: none;">
     <style>
         #${instanceId}-global-bg .aeon-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 2s ease; }
-        #${instanceId}-global-bg .aeon-overlay { position: absolute; inset: 0; z-index: 2; background: radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%); }
+        #${instanceId}-global-bg .aeon-overlay { position: absolute; inset: 0; z-index: 2; }
         #${instanceId}-global-bg .aeon-node { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; visibility: hidden; padding: 40px; box-sizing: border-box; }
-        #${instanceId}-global-bg .aeon-title { color: white; font-family: sans-serif; font-weight: 900; font-size: clamp(2.5rem, 10vw, 12rem); text-transform: uppercase; margin: 0; text-align: center; line-height: 0.8; letter-spacing: -0.05em; }
-        #${instanceId}-global-bg .aeon-desc { color: rgba(255,255,255,0.4); font-family: sans-serif; font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5em; margin-top: 30px; text-align: center; max-width: 800px; }
+        #${instanceId}-global-bg .aeon-title { color: white; font-family: sans-serif; font-weight: 900; font-size: clamp(2.5rem, 10vw, 12rem); text-transform: uppercase; margin: 0; text-align: center; line-height: 0.8; letter-spacing: -0.05em; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #${instanceId}-global-bg .aeon-desc { color: rgba(255,255,255,0.6); font-family: sans-serif; font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5em; margin-top: 30px; text-align: center; max-width: 800px; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     </style>
     <video id="${instanceId}-v" class="aeon-video" playsinline muted preload="auto"></video>
     <div class="aeon-overlay" id="${instanceId}-stage"></div>
@@ -151,15 +151,15 @@ export function generateSnippetCode(
      REPLACE THIS with your final hosted .mp4 video link for production.
   =============================================================================
 -->
-<div id="${instanceId}-track" style="height: ${scrollDepth * 100}vh; position: relative; background: #000; overflow: visible; ${containerStyles}">
+<div id="${instanceId}-track" style="height: ${scrollDepth * 100}vh; position: relative; background: transparent; overflow: visible; ${containerStyles}">
     <style>
-        #${instanceId}-track { font-family: sans-serif; background: #000; box-sizing: border-box; }
-        #${instanceId}-track .aeon-stage { position: sticky; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden; }
+        #${instanceId}-track { font-family: sans-serif; background: transparent; box-sizing: border-box; }
+        #${instanceId}-track .aeon-stage { position: sticky; top: 0; left: 0; width: 100%; height: 100vh; overflow: hidden; mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent); }
         #${instanceId}-track .aeon-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; opacity: 0; transition: opacity 1.5s ease; }
-        #${instanceId}-track .aeon-overlay { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; pointer-events: none; background: linear-gradient(to bottom, #000 0%, transparent 20%, transparent 80%, #000 100%); }
+        #${instanceId}-track .aeon-overlay { position: absolute; inset: 0; z-index: 2; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         #${instanceId}-track .aeon-node { position: absolute; width: 100%; padding: 0 10%; box-sizing: border-box; opacity: 0; visibility: hidden; }
-        #${instanceId}-track .aeon-title { font-size: clamp(2.5rem, 9vw, 11rem); font-weight: 900; text-transform: uppercase; line-height: 0.85; color: white; margin: 0; letter-spacing: -0.05em; }
-        #${instanceId}-track .aeon-desc { font-size: 16px; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-top: 2rem; letter-spacing: 0.5em; }
+        #${instanceId}-track .aeon-title { font-size: clamp(2.5rem, 9vw, 11rem); font-weight: 900; text-transform: uppercase; line-height: 0.85; color: white; margin: 0; letter-spacing: -0.05em; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #${instanceId}-track .aeon-desc { font-size: 16px; font-weight: 700; text-transform: uppercase; color: rgba(255,255,255,0.6); margin-top: 2rem; letter-spacing: 0.5em; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     </style>
     <div class="aeon-stage">
         <video id="${instanceId}-v" class="aeon-video" playsinline muted preload="auto"></video>

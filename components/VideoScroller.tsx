@@ -138,8 +138,9 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
     height: '100dvh',
     zIndex: 0,
     overflow: 'hidden',
-    backgroundColor: 'black',
-    willChange: 'transform' // Performance optimization
+    willChange: 'transform', // Performance optimization
+    maskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)',
+    WebkitMaskImage: 'linear-gradient(to bottom, transparent, black 15%, black 85%, transparent)'
   };
 
   if (layoutMode === 'background') {
@@ -169,7 +170,6 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
           className={`w-full h-full object-cover transition-opacity duration-1000 ${isLoaded ? 'opacity-100' : 'opacity-0'}`} 
           style={{ backfaceVisibility: 'hidden' }}
         />
-        <div className="absolute inset-0 bg-black/40 pointer-events-none z-[5]" />
         
         <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none px-6">
           {sections.map((section, idx) => (
