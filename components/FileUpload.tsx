@@ -11,7 +11,7 @@ const SAMPLES = [
   { 
     id: '1', 
     name: 'THE DREAM', 
-    url: 'https://res.cloudinary.com/dd7o282ls/video/upload/v1771513308/space_jupuge.mp4', 
+    url: 'https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', 
     icon: <Rocket size={32}/>,
     tag: 'SURREAL'
   },

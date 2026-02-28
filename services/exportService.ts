@@ -86,21 +86,31 @@ export function generateSnippetCode(
             });
 
             let targetProgress = 0, currentProgress = 0, isSeeking = false;
+            let lastScrollTime = Date.now(), lastScrollPos = window.scrollY, velocity = 0;
 
             function loop() {
-                // Smooth Smoothing Interpolation (LERP)
-                currentProgress += (targetProgress - currentProgress) * CONFIG.lerp;
+                const now = Date.now();
+                const dt = now - lastScrollTime;
+                if (dt > 0) velocity = Math.abs((window.scrollY - lastScrollPos) / dt);
+                lastScrollTime = now;
+                lastScrollPos = window.scrollY;
+
+                // Dynamic LERP based on velocity
+                const speedFactor = Math.min(1, velocity / 5);
+                const dynamicLerp = CONFIG.lerp + (speedFactor * (1 - CONFIG.lerp) * 0.5);
+                currentProgress += (targetProgress - currentProgress) * dynamicLerp;
                 
                 // Sync Video Playback Position
                 if (video.duration && !isSeeking) {
                     const targetTime = (video.duration - 0.05) * currentProgress;
-                    if (Math.abs(video.currentTime - targetTime) > 0.03) { 
+                    const threshold = velocity > 0.5 ? 0.06 : 0.02;
+                    if (Math.abs(video.currentTime - targetTime) > threshold) { 
                         isSeeking = true; 
                         video.currentTime = targetTime; 
                     }
                 }
                 
-                // Animate Text Sections based on scroll distance
+                // Animate Text Sections
                 CONFIG.data.forEach((s, i) => {
                     const el = document.getElementById('${instanceId}-n-' + i);
                     const dist = Math.abs(currentProgress - s.triggerTime);
@@ -109,6 +119,8 @@ export function generateSnippetCode(
                     el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
                     el.style.transform = \`translate3d(0, \${(currentProgress - s.triggerTime) * 150}px, 0)\`;
                 });
+
+                velocity *= 0.95;
                 requestAnimationFrame(loop);
             }
 
@@ -191,15 +203,25 @@ export function generateSnippetCode(
             });
 
             let targetProgress = 0, currentProgress = 0, isSeeking = false;
+            let lastScrollTime = Date.now(), lastScrollPos = window.scrollY, velocity = 0;
 
             function loop() {
-                // Smooth Scroll Interpolation
-                currentProgress += (targetProgress - currentProgress) * CONFIG.lerp;
+                const now = Date.now();
+                const dt = now - lastScrollTime;
+                if (dt > 0) velocity = Math.abs((window.scrollY - lastScrollPos) / dt);
+                lastScrollTime = now;
+                lastScrollPos = window.scrollY;
+
+                // Dynamic LERP based on velocity
+                const speedFactor = Math.min(1, velocity / 5);
+                const dynamicLerp = CONFIG.lerp + (speedFactor * (1 - CONFIG.lerp) * 0.5);
+                currentProgress += (targetProgress - currentProgress) * dynamicLerp;
                 
                 // Sync Video Playback
                 if (video.duration && !isSeeking) {
                     const targetTime = (video.duration - 0.05) * currentProgress;
-                    if (Math.abs(video.currentTime - targetTime) > 0.03) { 
+                    const threshold = velocity > 0.5 ? 0.06 : 0.02;
+                    if (Math.abs(video.currentTime - targetTime) > threshold) { 
                         isSeeking = true; 
                         video.currentTime = targetTime; 
                     }
@@ -214,6 +236,8 @@ export function generateSnippetCode(
                     el.style.visibility = opacity > 0.01 ? 'visible' : 'hidden';
                     el.style.transform = \`translate3d(0, \${(currentProgress - s.triggerTime) * 150}px, 0)\`;
                 });
+
+                velocity *= 0.95;
                 requestAnimationFrame(loop);
             }
 

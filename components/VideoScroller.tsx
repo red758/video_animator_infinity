@@ -28,6 +28,9 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
   
   const targetProgress = useRef(0);
   const currentProgress = useRef(0);
+  const lastScrollTime = useRef(Date.now());
+  const lastScrollPos = useRef(0);
+  const velocity = useRef(0);
   const isSeeking = useRef(false);
 
   useEffect(() => {
@@ -65,6 +68,17 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
       const vh = window.innerHeight;
       const totalScrollableHeight = containerRef.current.offsetHeight - vh;
       
+      const now = Date.now();
+      const dt = now - lastScrollTime.current;
+      const dy = window.scrollY - lastScrollPos.current;
+      
+      if (dt > 0) {
+        velocity.current = Math.abs(dy / dt);
+      }
+      
+      lastScrollTime.current = now;
+      lastScrollPos.current = window.scrollY;
+
       if (rect.top > 0) {
         setPlacement('top');
       } else if (rect.bottom < vh) {
@@ -80,24 +94,30 @@ const VideoScroller: React.FC<VideoScrollerProps> = ({
     };
 
     const animate = () => {
-      // Snappier LERP for immediate feedback
-      const actualSensitivity = isEditMode ? 0.2 : sensitivity;
-      currentProgress.current += (targetProgress.current - currentProgress.current) * actualSensitivity;
+      // DYNAMIC SENSITIVITY: Adapt to scroll speed
+      const speedFactor = Math.min(1, velocity.current / 5); 
+      const baseSensitivity = isEditMode ? 0.25 : sensitivity;
+      const dynamicSensitivity = baseSensitivity + (speedFactor * (1 - baseSensitivity) * 0.5);
+      
+      currentProgress.current += (targetProgress.current - currentProgress.current) * dynamicSensitivity;
       const progress = currentProgress.current;
 
       const video = videoRef.current;
       
       // HIGH-PERFORMANCE SCRUBBING ENGINE
-      // Only request a new frame if the decoder is ready (isSeeking is false)
-      // This prevents the "Laggy/Choppy" feel by not overloading the browser's video engine
       if (video && isLoaded && video.duration > 0 && !isSeeking.current) {
         const targetTime = (video.duration - 0.05) * progress;
-        // Only seek if change is meaningful (> 1 frame roughly)
-        if (Math.abs(video.currentTime - targetTime) > 0.03) {
+        const timeDiff = Math.abs(video.currentTime - targetTime);
+        const threshold = velocity.current > 0.5 ? 0.06 : 0.02;
+        
+        if (timeDiff > threshold) {
           isSeeking.current = true;
           video.currentTime = targetTime;
         }
       }
+
+      // Decay velocity
+      velocity.current *= 0.95;
 
       // Animate Narrative Nodes
       sections.forEach((section, idx) => {
