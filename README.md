@@ -12,7 +12,6 @@ Through its interactive **Architect Mode**, users can edit, design, and position
     *   **Advanced Control Nodes**: Sliders for Scale, Letter Spacing, Rotation, Corner Radius, Opacity, and Page Width constraints.
     *   **Dynamic Styling**: Real-time color palette picking and multiple curated typography styles (Sans, Serif, Mono, Display).
     *   **Button Customization**: Support for responsive shape alterations, rounded corners, custom actions, and redirection anchors.
-*   **Gemini AI Narrative Generator**: Auto-analyzes uploaded or sample media files to generate custom, structured stories matching a given brand name and cinematic mood.
 *   **Adaptive Layout Modes**:
     *   *In-Page Sticky Sections*: Integrates seamlessly as part of an existing scrollable article.
     *   *Global Backdrop*: Fixes the video canvas as a full-page cinematic background while web content effortlessly glides over.
@@ -30,18 +29,17 @@ To achieve an optimal editing experience, the Aeon Infinity Engine separates UI 
 How It Works & How to Use
 
 1.  **Drop Your Media**: Drag and drop a cinematic MP4 file, paste a public URL, or load the pre-configured *subconscious.mp4* sample file.
-2.  **Let AI Build the Story**: Type your brand name and witness the Gemini AI service generate customized storytelling elements strategically triggered along the scroll timeline.
-3.  **Enter Architect Mode**: Toggle **Edit Mode** from the bottom toolbar.
+2.  **Enter Architect Mode**: Toggle **Edit Mode** from the bottom toolbar.
     *   Hover over any element to show the drag handle.
     *   Click the **Gear Icon (Settings)** on the control node to slide open the detail editor.
     *   Drag, style, rotate, and color to perfection.
-4.  **Refine Blending**: Use the navigation toolbar to modify masking gradients, toggle extra scrolling smooth filters, or add new interactive segments.
-5.  **Export Code**: Click **Export Snippet** to view and copy the fully styled code.
+3.  **Refine Blending**: Use the navigation toolbar to modify masking gradients, toggle extra scrolling smooth filters, or add new interactive segments.
+4.  **Export Code**: Click **Export Snippet** to view and copy the fully styled code.
 
 ## Technical Implementation Details
 
 *   **Framework**: React 18, TypeScript, Vite
 *   **Styling**: Tailwind CSS
-*   **Animations**: Motion (`motion/react`)
+*   **Animations**: Motion
 *   **Smooth Scroll**: Lenis Scroll Engine (custom elastic-damped wheel interpolation)
 *   **Icons**: Lucide React
